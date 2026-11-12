@@ -21,7 +21,15 @@ import {
   AuthUser,
 } from '../types/ehs';
 
-export const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://127.0.0.1:8001';
+/**
+ * API base URL. Empty string (default) = same-origin requests like `/api/v1/...`,
+ * which the Vite dev/preview proxy forwards to the backend (see vite.config.ts).
+ * Set VITE_API_URL (e.g. https://api.example.com) to target a remote backend directly;
+ * that backend must then allow this origin in CORS_ORIGINS.
+ */
+export const API_BASE_URL: string = (
+  ((import.meta as any).env?.VITE_API_URL as string | undefined) ?? ''
+).replace(/\/+$/, '');
 
 async function fetchJson<T>(endpoint: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${endpoint}`, init);

@@ -18,7 +18,12 @@ class Settings(BaseSettings):
     DB_SCHEMA: str = "ehs_core"
 
     # CORS & Auth
-    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000,http://localhost:4173,http://127.0.0.1:4173"
+    # Vite dev (3000), Vite default (5173) and Vite preview (4173). Override via CORS_ORIGINS env.
+    CORS_ORIGINS: str = (
+        "http://localhost:3000,http://127.0.0.1:3000,"
+        "http://localhost:5173,http://127.0.0.1:5173,"
+        "http://localhost:4173,http://127.0.0.1:4173"
+    )
     AUTH_SECRET_KEY: str = ""
 
     # DomoGPT Text Generation API Configuration (loaded from backend/.env)

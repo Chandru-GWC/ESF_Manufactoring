@@ -17,5 +17,4 @@ Example FFmpeg preparation command:
 ffmpeg -i source_factory.mp4 -c:v libx264 -pix_fmt yuv420p -profile:v high -movflags +faststart -an -t 15 -vf "scale=1920:-2" public/media/hero-factory.mp4
 ```
 
-The Landing Page automatically detects `public/media/hero-factory.mp4` via `/api/v1/system/landing-media` (and Vite dev checks) and falls back cleanly to `public/media/hero-poster.jpg` whenever no local video file is present or when `prefers-reduced-motion: reduce` is enabled.
-
+The Landing Page always renders `hero-poster.jpg` first and mounts `hero-factory.mp4` directly from `/media/hero-factory.mp4` (no backend call). The video fades in only after it has actually loaded; if the file is missing, fails to decode, or `prefers-reduced-motion: reduce` is set, the poster stays. `*.mp4` in `public/media` is git-ignored (large binary) — copy it onto each machine/deploy.

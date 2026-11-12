@@ -6,6 +6,7 @@ import { TopNavigation } from './TopNavigation';
 import { DatasetIngestionModal } from '../common/DatasetIngestionModal';
 import { CommandPaletteModal } from '../common/CommandPaletteModal';
 import { NotificationPanel } from '../ui/NotificationPanel';
+import { ErrorBoundary } from '../common/ErrorBoundary';
 import { NavSection, RouteFilterPreset } from '../../types/ehs';
 import { useEhs } from '../../context/EhsContext';
 import { PAGE_VARIANTS } from '../../lib/motion';
@@ -131,7 +132,9 @@ export const ApplicationShell: React.FC<ApplicationShellProps> = ({
             initial="hidden"
             animate="visible"
           >
-            {children}
+            <ErrorBoundary key={location.pathname} scope="This view">
+              {children}
+            </ErrorBoundary>
           </motion.div>
         </main>
       </div>

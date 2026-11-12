@@ -14,8 +14,11 @@ import {
   Activity,
   Lock,
 } from 'lucide-react';
-import { ehsApi } from '../services/api';
-import { LandingMediaStatus } from '../types/ehs';
+
+// Locally hosted hero media, served from /public/media. No backend call is needed:
+// the poster is always rendered, and the video fades in only once it has really loaded.
+const HERO_VIDEO_SRC = '/media/hero-factory.mp4';
+const HERO_POSTER_SRC = '/media/hero-poster.jpg';
 
 const SOLUTIONS = [
   {
@@ -83,32 +86,13 @@ const INDUSTRIES = [
 
 export const LandingPage: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [mediaStatus, setMediaStatus] = useState<LandingMediaStatus>({
-    video_available: false,
-    video_url: null,
-    poster_available: true,
-    poster_url: '/media/hero-poster.jpg',
-  });
+  const [videoReady, setVideoReady] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState<boolean>(() => {
     if (typeof window === 'undefined' || !window.matchMedia) return false;
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   });
   const [isPaused, setIsPaused] = useState<boolean>(prefersReducedMotion);
-
-  useEffect(() => {
-    let cancelled = false;
-    ehsApi
-      .getLandingMediaStatus()
-      .then(status => {
-        if (!cancelled) setMediaStatus(status);
-      })
-      .catch(() => {
-        // Keep local poster fallback cleanly if backend is offline
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) return;
@@ -139,8 +123,9 @@ export const LandingPage: React.FC = () => {
     }
   };
 
-  const showVideo = mediaStatus.video_available && Boolean(mediaStatus.video_url) && !prefersReducedMotion;
-  const posterSrc = mediaStatus.poster_url || '/media/hero-poster.jpg';
+  const mountVideo = !videoFailed && !prefersReducedMotion;
+  const showVideo = mountVideo && videoReady;
+  const posterSrc = HERO_POSTER_SRC;
 
   return (
     <div className="min-h-screen bg-canvas-app text-ink-primary font-sans">
@@ -204,18 +189,24 @@ export const LandingPage: React.FC = () => {
         />
 
         {/* Local Full-Bleed Factory Video when public/media/hero-factory.mp4 exists */}
-        {showVideo && mediaStatus.video_url && (
+        {mountVideo && (
           <video
             ref={videoRef}
-            src={mediaStatus.video_url}
+            src={HERO_VIDEO_SRC}
             poster={posterSrc}
-            autoPlay={!prefersReducedMotion}
+            autoPlay
             muted
             loop
             playsInline
+            preload="auto"
+            aria-hidden="true"
+            onLoadedData={() => setVideoReady(true)}
+            onError={() => setVideoFailed(true)}
             onPlay={() => setIsPaused(false)}
             onPause={() => setIsPaused(true)}
-            className="absolute inset-0 w-full h-full object-cover"
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
+              videoReady ? 'opacity-100' : 'opacity-0'
+            }`}
           />
         )}
 
