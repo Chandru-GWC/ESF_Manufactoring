@@ -1,0 +1,40 @@
+# Environment files (never commit credentials or database URLs)
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Frontend build & dependencies
+node_modules/
+dist/
+.vite/
+
+# Python virtualenvs & caches
+backend/.venv/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local databases & temporary scripts
+*.db
+*.sqlite
+scratch/
+
+
+# Nested third-party repo (own .git, venv, demo videos) — not part of this repo
+OpenFall/
+
+# Large model weights and generated/runtime media (reproducible or too large for git)
+backend/models_cache/
+backend/storage/
+public/media/*.mp4
+public/media/*.webm
+*.pt
+*.onnx
+
+# Local tooling state
+.claude/settings.local.json
+.pytest_cache/
