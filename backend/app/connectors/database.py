@@ -25,8 +25,10 @@ logger = logging.getLogger("ehs.connectors.db")
 
 _raw_url = settings.effective_connector_db_url
 
-# Ensure postgresql+psycopg2 driver dialect is explicitly specified for PostgreSQL URLs
-if _raw_url.startswith("postgresql://"):
+# Ensure postgresql+psycopg2 driver dialect is explicitly specified for PostgreSQL URLs (support both postgres:// and postgresql:// from cloud providers like Render)
+if _raw_url.startswith("postgres://"):
+    _db_url = _raw_url.replace("postgres://", "postgresql+psycopg2://", 1)
+elif _raw_url.startswith("postgresql://"):
     _db_url = _raw_url.replace("postgresql://", "postgresql+psycopg2://", 1)
 else:
     _db_url = _raw_url

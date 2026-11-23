@@ -52,32 +52,61 @@ class EhsEventRepository:
         return query.scalar() or 0
 
     def get_aggregations(self, plant_id: Optional[str] = None) -> Dict:
-        base_query = self.db.query(EhsEvent)
+        from collections import Counter
+        cols = self.db.query(
+            EhsEvent.event_type,
+            EhsEvent.risk_severity,
+            EhsEvent.action_status,
+            EhsEvent.plant_id,
+            EhsEvent.area,
+            EhsEvent.shift_id,
+            EhsEvent.hazard_category,
+            EhsEvent.event_ts,
+        )
         if plant_id:
-            base_query = base_query.filter(EhsEvent.plant_id == plant_id)
+            cols = cols.filter(EhsEvent.plant_id == plant_id)
+        rows = cols.all()
 
-        total = base_query.count()
+        by_event_type = Counter()
+        by_severity = Counter()
+        by_action_status = Counter()
+        by_plant = Counter()
+        by_area = Counter()
+        by_shift = Counter()
+        by_hazard_category = Counter()
+        min_date = None
+        max_date = None
 
-        def group_counts(col):
-            q = self.db.query(col, func.count(EhsEvent.ehs_event_id))
-            if plant_id:
-                q = q.filter(EhsEvent.plant_id == plant_id)
-            return {val: count for val, count in q.group_by(col).all()}
-
-        date_q = self.db.query(func.min(EhsEvent.event_ts), func.max(EhsEvent.event_ts))
-        if plant_id:
-            date_q = date_q.filter(EhsEvent.plant_id == plant_id)
-        min_date, max_date = date_q.one()
+        for r in rows:
+            if r.event_type:
+                by_event_type[r.event_type] += 1
+            if r.risk_severity:
+                by_severity[r.risk_severity] += 1
+            if r.action_status:
+                by_action_status[r.action_status] += 1
+            if r.plant_id:
+                by_plant[r.plant_id] += 1
+            if r.area:
+                by_area[r.area] += 1
+            if r.shift_id:
+                by_shift[r.shift_id] += 1
+            if r.hazard_category:
+                by_hazard_category[r.hazard_category] += 1
+            if r.event_ts:
+                if min_date is None or r.event_ts < min_date:
+                    min_date = r.event_ts
+                if max_date is None or r.event_ts > max_date:
+                    max_date = r.event_ts
 
         return {
-            "total_events": total,
-            "by_event_type": group_counts(EhsEvent.event_type),
-            "by_severity": group_counts(EhsEvent.risk_severity),
-            "by_action_status": group_counts(EhsEvent.action_status),
-            "by_plant": group_counts(EhsEvent.plant_id),
-            "by_area": group_counts(EhsEvent.area),
-            "by_shift": group_counts(EhsEvent.shift_id),
-            "by_hazard_category": group_counts(EhsEvent.hazard_category),
+            "total_events": len(rows),
+            "by_event_type": dict(by_event_type),
+            "by_severity": dict(by_severity),
+            "by_action_status": dict(by_action_status),
+            "by_plant": dict(by_plant),
+            "by_area": dict(by_area),
+            "by_shift": dict(by_shift),
+            "by_hazard_category": dict(by_hazard_category),
             "date_range": {
                 "start": min_date.isoformat() if min_date else None,
                 "end": max_date.isoformat() if max_date else None,

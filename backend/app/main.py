@@ -59,21 +59,31 @@ def _warm_db_pool(connections: int = 4) -> None:
 
         detection_routes._ensure_video_table()
         alert_service.ensure_alert_tables(engine)
+
+        # Pre-warm in-memory caches so startup queries and initial page loads are instantaneous (<20ms)
+        try:
+            from app.api.routes.analytics import get_global_operations_overview, get_workforce_summary, get_maintenance_summary
+            from app.api.routes.events import get_event_summary
+            from app.services.dashboards import builders
+            with SessionLocal() as db:
+                get_global_operations_overview(plant_id=None, db=db)
+                get_event_summary(plant_id=None, db=db)
+                get_workforce_summary(plant_id=None, db=db)
+                get_maintenance_summary(plant_id=None, db=db)
+                for kind in ["events", "attendance", "maintenance"]:
+                    builders.build_dashboard(db, kind, None, use_cache=True)
+        except Exception as warm_err:
+            logging.getLogger("ehs.warmup").warning("Startup cache pre-warming skipped: %s", warm_err)
     except Exception as exc:  # the first real request will retry; never block startup
         logging.getLogger("ehs.db").warning("Database warm-up failed: %s", exc)
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    # Initialize separate Connector DB in background thread without blocking main app
-    try:
-        from app.connectors.database import init_connector_db
-        await asyncio.to_thread(init_connector_db)
-    except Exception as e:
-        logging.getLogger("ehs.connectors").warning("Could not auto-initialize connector DB on startup: %s", e)
+    # Initialize separate Connector DB in background task without blocking main app startup
+    asyncio.create_task(asyncio.to_thread(_init_connector_db_safe))
 
-    # Open a few database connections now: the first connection to the (distant) database takes ~10 s, which the
-    # first user would otherwise wait for. Runs in the background; the server answers requests meanwhile.
+    # Open a few database connections now in the background
     asyncio.create_task(asyncio.to_thread(_warm_db_pool))
 
     scheduler = asyncio.create_task(_alert_scheduler()) if settings.EHS_ALERT_SCHEDULER else None
@@ -89,6 +99,14 @@ async def lifespan(_app: FastAPI):
         await domogpt_service.aclose()
 
 
+def _init_connector_db_safe() -> None:
+    try:
+        from app.connectors.database import init_connector_db
+        init_connector_db()
+    except Exception as e:
+        logging.getLogger("ehs.connectors").warning("Could not auto-initialize connector DB in background: %s", e)
+
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
@@ -98,10 +116,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+cors_origins = settings.cors_origins_list
+has_wildcard = "*" in cors_origins
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
-    allow_credentials=True,
+    allow_origins=cors_origins,
+    allow_credentials=not has_wildcard,
     allow_methods=["*"],
     allow_headers=["*"],
 )

@@ -7,8 +7,10 @@ from app.core.config import settings
 db_url = settings.DATABASE_URL
 connect_args = {}
 
-# Ensure postgresql+psycopg2 driver dialect is explicitly specified
-if db_url.startswith("postgresql://"):
+# Ensure postgresql+psycopg2 driver dialect is explicitly specified (support both postgres:// and postgresql:// from cloud providers like Render)
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql+psycopg2://", 1)
+elif db_url.startswith("postgresql://"):
     db_url = db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
 
 if "postgresql" in db_url or "postgres" in db_url:

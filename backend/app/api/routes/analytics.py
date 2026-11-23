@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func
-from typing import List, Optional
+from sqlalchemy import func, text
+from typing import Dict, List, Optional, Tuple
+import time
 from app.core.database import get_db
 from app.core.deps import ACTOR, plant_filter
 from app.models.workforce_maintenance import WorkforceAttendance, MaintenanceWorkOrder
@@ -16,49 +17,84 @@ from app.schemas.analytics import (
 
 router = APIRouter(prefix="/analytics", tags=["Operational Analytics & Live Datasets"])
 
+# In-memory TTL caches to eliminate round-trip latency to remote PostgreSQL
+_OVERVIEW_CACHE: Dict[str, Tuple[float, OperationsOverviewSummary]] = {}
+_WORKFORCE_CACHE: Dict[str, Tuple[float, WorkforceSummary]] = {}
+_MAINTENANCE_CACHE: Dict[str, Tuple[float, MaintenanceSummary]] = {}
+_CACHE_TTL = 45.0  # seconds
+
+
 @router.get("/overview", response_model=OperationsOverviewSummary)
 def get_global_operations_overview(
     plant_id: Optional[str] = Query(None, description="Optional plant scope filter"),
     db: Session = Depends(get_db)
 ):
     plant_id = plant_filter(plant_id)
+    cache_key = plant_id or "ALL"
+
+    now = time.time()
+    if cache_key in _OVERVIEW_CACHE:
+        cached_time, cached_val = _OVERVIEW_CACHE[cache_key]
+        if now - cached_time < _CACHE_TTL:
+            return cached_val
+
+    # Single unified SQL queries instead of 13 separate network round-trips
+    p_filter = "AND plant_id = :p" if plant_id else ""
+    p_where = "WHERE plant_id = :p" if plant_id else ""
+    params = {"p": plant_id} if plant_id else {}
+
+    ehs_sql = f"""
+        SELECT
+            COUNT(*),
+            COALESCE(SUM(CASE WHEN event_type = 'HAZARD_OBSERVATION' THEN 1 ELSE 0 END), 0),
+            COALESCE(SUM(CASE WHEN event_type IN ('FIRST_AID', 'LOST_TIME_INJURY') THEN 1 ELSE 0 END), 0),
+            COALESCE(SUM(CASE WHEN event_type = 'NEAR_MISS' THEN 1 ELSE 0 END), 0),
+            COALESCE(SUM(CASE WHEN event_type = 'PERMIT_EXCEPTION' THEN 1 ELSE 0 END), 0),
+            COALESCE(SUM(CASE WHEN action_status IN ('OPEN', 'IN_PROGRESS') THEN 1 ELSE 0 END), 0),
+            COALESCE(SUM(CASE WHEN action_status = 'CLOSED' THEN 1 ELSE 0 END), 0),
+            COALESCE(SUM(CASE WHEN risk_severity = 'CRITICAL' THEN 1 ELSE 0 END), 0)
+        FROM ehs_core.fact_ehs_event
+        WHERE 1=1 {p_filter}
     """
-    Computes unified operational safety summary directly from Neon PostgreSQL tables.
-    Zero fabricated numbers.
+    ehs_res = db.execute(text(ehs_sql), params).one()
+
+    wf_sql = f"""
+        SELECT
+            COUNT(*),
+            COALESCE(SUM(actual_hours), 0.0),
+            COALESCE(SUM(CASE WHEN training_compliance = 'CURRENT' THEN 1 ELSE 0 END), 0)
+        FROM ehs_core.fact_workforce_attendance
+        WHERE 1=1 {p_filter}
     """
-    ehs_q = db.query(EhsEvent)
-    wf_q = db.query(WorkforceAttendance)
-    mwo_q = db.query(MaintenanceWorkOrder)
+    wf_res = db.execute(text(wf_sql), params).one()
 
-    if plant_id:
-        ehs_q = ehs_q.filter(EhsEvent.plant_id == plant_id)
-        wf_q = wf_q.filter(WorkforceAttendance.plant_id == plant_id)
-        mwo_q = mwo_q.filter(MaintenanceWorkOrder.plant_id == plant_id)
+    mwo_sql = f"""
+        SELECT
+            COUNT(*),
+            COALESCE(SUM(CASE WHEN priority = 'P1' THEN 1 ELSE 0 END), 0)
+        FROM ehs_core.fact_maintenance_work_order
+        WHERE 1=1 {p_filter}
+    """
+    mwo_res = db.execute(text(mwo_sql), params).one()
 
-    total_events = ehs_q.count()
-    hazards = ehs_q.filter(EhsEvent.event_type == 'HAZARD_OBSERVATION').count()
-    incidents = ehs_q.filter(EhsEvent.event_type.in_(['FIRST_AID', 'LOST_TIME_INJURY'])).count()
-    near_miss = ehs_q.filter(EhsEvent.event_type == 'NEAR_MISS').count()
-    permits = ehs_q.filter(EhsEvent.event_type == 'PERMIT_EXCEPTION').count()
-    open_actions = ehs_q.filter(EhsEvent.action_status.in_(['OPEN', 'IN_PROGRESS'])).count()
-    closed_actions = ehs_q.filter(EhsEvent.action_status == 'CLOSED').count()
-    critical_events = ehs_q.filter(EhsEvent.risk_severity == 'CRITICAL').count()
+    total_events = int(ehs_res[0] or 0)
+    hazards = int(ehs_res[1] or 0)
+    incidents = int(ehs_res[2] or 0)
+    near_miss = int(ehs_res[3] or 0)
+    permits = int(ehs_res[4] or 0)
+    open_actions = int(ehs_res[5] or 0)
+    closed_actions = int(ehs_res[6] or 0)
+    critical_events = int(ehs_res[7] or 0)
 
-    # Workforce hours & training
-    total_wf = wf_q.count()
-    total_hours = db.query(func.sum(WorkforceAttendance.actual_hours))
-    if plant_id:
-        total_hours = total_hours.filter(WorkforceAttendance.plant_id == plant_id)
-    hours_val = float(total_hours.scalar() or 0.0)
-
-    curr_training = wf_q.filter(WorkforceAttendance.training_compliance == 'CURRENT').count()
+    total_wf = int(wf_res[0] or 0)
+    hours_val = float(wf_res[1] or 0.0)
+    curr_training = int(wf_res[2] or 0)
     training_rate = round((curr_training / total_wf * 100), 2) if total_wf > 0 else 0.0
 
-    # Maintenance
-    total_mwo = mwo_q.count()
-    p1_mwo = mwo_q.filter(MaintenanceWorkOrder.priority == 'P1').count()
+    total_mwo = int(mwo_res[0] or 0)
+    p1_mwo = int(mwo_res[1] or 0)
 
-    return OperationsOverviewSummary(
+    summary = OperationsOverviewSummary(
         total_ehs_events=total_events,
         total_workforce_records=total_wf,
         total_maintenance_work_orders=total_mwo,
@@ -75,6 +111,8 @@ def get_global_operations_overview(
         plants=["IN-KA-01", "IN-TN-01"],
         shifts=["A", "B", "C"]
     )
+    _OVERVIEW_CACHE[cache_key] = (now, summary)
+    return summary
 
 @router.get("/workforce", response_model=List[WorkforceAttendanceResponse])
 def get_workforce_records(
@@ -104,16 +142,21 @@ def get_workforce_summary(
     db: Session = Depends(get_db)
 ):
     plant_id = plant_filter(plant_id)
-    q = db.query(WorkforceAttendance)
-    if plant_id:
-        q = q.filter(WorkforceAttendance.plant_id == plant_id)
+    cache_key = plant_id or "ALL"
+    now = time.time()
+    if cache_key in _WORKFORCE_CACHE:
+        cached_time, cached_val = _WORKFORCE_CACHE[cache_key]
+        if now - cached_time < _CACHE_TTL:
+            return cached_val
 
-    total = q.count()
-    hours = db.query(func.sum(WorkforceAttendance.actual_hours))
-    ot = db.query(func.sum(WorkforceAttendance.overtime_hours))
+    totals_q = db.query(
+        func.count(WorkforceAttendance.attendance_id),
+        func.sum(WorkforceAttendance.actual_hours),
+        func.sum(WorkforceAttendance.overtime_hours)
+    )
     if plant_id:
-        hours = hours.filter(WorkforceAttendance.plant_id == plant_id)
-        ot = ot.filter(WorkforceAttendance.plant_id == plant_id)
+        totals_q = totals_q.filter(WorkforceAttendance.plant_id == plant_id)
+    total_cnt, total_hours, total_ot = totals_q.one()
 
     def group_count(col):
         res = db.query(col, func.count(WorkforceAttendance.attendance_id))
@@ -121,16 +164,18 @@ def get_workforce_summary(
             res = res.filter(WorkforceAttendance.plant_id == plant_id)
         return {k: v for k, v in res.group_by(col).all()}
 
-    return WorkforceSummary(
-        total_records=total,
-        total_actual_hours=float(hours.scalar() or 0.0),
-        total_overtime_hours=float(ot.scalar() or 0.0),
+    summary = WorkforceSummary(
+        total_records=total_cnt or 0,
+        total_actual_hours=float(total_hours or 0.0),
+        total_overtime_hours=float(total_ot or 0.0),
         by_status=group_count(WorkforceAttendance.attendance_status),
         by_skill_match=group_count(WorkforceAttendance.skill_match),
         by_training_compliance=group_count(WorkforceAttendance.training_compliance),
         by_plant=group_count(WorkforceAttendance.plant_id),
         by_shift=group_count(WorkforceAttendance.shift_id)
     )
+    _WORKFORCE_CACHE[cache_key] = (now, summary)
+    return summary
 
 @router.get("/maintenance", response_model=List[MaintenanceWorkOrderResponse])
 def get_maintenance_work_orders(
@@ -157,28 +202,56 @@ def get_maintenance_summary(
     db: Session = Depends(get_db)
 ):
     plant_id = plant_filter(plant_id)
-    q = db.query(MaintenanceWorkOrder)
-    if plant_id:
-        q = q.filter(MaintenanceWorkOrder.plant_id == plant_id)
+    cache_key = plant_id or "ALL"
+    now = time.time()
+    if cache_key in _MAINTENANCE_CACHE:
+        cached_time, cached_val = _MAINTENANCE_CACHE[cache_key]
+        if now - cached_time < _CACHE_TTL:
+            return cached_val
 
-    total = q.count()
-    dt_saved = db.query(func.sum(MaintenanceWorkOrder.downtime_avoided_estimate_min))
-    if plant_id:
-        dt_saved = dt_saved.filter(MaintenanceWorkOrder.plant_id == plant_id)
-
-    def group_count(col):
-        res = db.query(col, func.count(MaintenanceWorkOrder.work_order_id))
-        if plant_id:
-            res = res.filter(MaintenanceWorkOrder.plant_id == plant_id)
-        return {k: v for k, v in res.group_by(col).all()}
-
-    return MaintenanceSummary(
-        total_work_orders=total,
-        total_downtime_avoided_min=int(dt_saved.scalar() or 0),
-        by_type=group_count(MaintenanceWorkOrder.maintenance_type),
-        by_priority=group_count(MaintenanceWorkOrder.priority),
-        by_status=group_count(MaintenanceWorkOrder.status),
-        by_failure_mode=group_count(MaintenanceWorkOrder.failure_mode),
-        by_plant=group_count(MaintenanceWorkOrder.plant_id)
+    from collections import Counter
+    cols = db.query(
+        MaintenanceWorkOrder.maintenance_type,
+        MaintenanceWorkOrder.priority,
+        MaintenanceWorkOrder.status,
+        MaintenanceWorkOrder.failure_mode,
+        MaintenanceWorkOrder.plant_id,
+        MaintenanceWorkOrder.downtime_avoided_estimate_min
     )
+    if plant_id:
+        cols = cols.filter(MaintenanceWorkOrder.plant_id == plant_id)
+    rows = cols.all()
+
+    by_type = Counter()
+    by_priority = Counter()
+    by_status = Counter()
+    by_failure_mode = Counter()
+    by_plant = Counter()
+    total_dt = 0
+
+    for r in rows:
+        if r.maintenance_type:
+            by_type[r.maintenance_type] += 1
+        if r.priority:
+            by_priority[r.priority] += 1
+        if r.status:
+            by_status[r.status] += 1
+        if r.failure_mode:
+            by_failure_mode[r.failure_mode] += 1
+        if r.plant_id:
+            by_plant[r.plant_id] += 1
+        if r.downtime_avoided_estimate_min:
+            total_dt += int(r.downtime_avoided_estimate_min)
+
+    summary = MaintenanceSummary(
+        total_work_orders=len(rows),
+        total_downtime_avoided_min=total_dt,
+        by_type=dict(by_type),
+        by_priority=dict(by_priority),
+        by_status=dict(by_status),
+        by_failure_mode=dict(by_failure_mode),
+        by_plant=dict(by_plant)
+    )
+    _MAINTENANCE_CACHE[cache_key] = (now, summary)
+    return summary
 

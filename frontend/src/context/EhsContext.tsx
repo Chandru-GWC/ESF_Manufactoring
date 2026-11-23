@@ -124,23 +124,68 @@ const mapSeverity = (sev: string): SeverityLevel => {
   return 'info';
 };
 
+interface CachedSummaries {
+  overview: OperationsOverviewSummary;
+  event: EventAggregationSummary;
+  workforce: WorkforceSummary;
+  maintenance: MaintenanceSummary;
+  lastSyncedAt: string;
+  ts: number;
+}
+
+interface CachedRaw {
+  events: EhsEventRecord[];
+  attendance: WorkforceAttendanceRecord[];
+  maintenance: MaintenanceWorkOrderRecord[];
+  ts: number;
+}
+
+const getSessionSummaries = (facility: string): CachedSummaries | null => {
+  try {
+    const raw = sessionStorage.getItem(`ehs_sum_${facility}`);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Date.now() - parsed.ts < 180000) { // 3 minutes valid
+        return parsed;
+      }
+    }
+  } catch {}
+  return null;
+};
+
+const getSessionRaw = (facility: string): CachedRaw | null => {
+  try {
+    const raw = sessionStorage.getItem(`ehs_raw_${facility}`);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Date.now() - parsed.ts < 180000) {
+        return parsed;
+      }
+    }
+  } catch {}
+  return null;
+};
+
 export const EhsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const theme: 'light' = 'light';
   const [regulatoryFramework, setRegulatoryFramework] = useState<RegulatoryFramework>('ISO_45001');
   const [facilityId, setFacilityId] = useState<string>('ALL');
 
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const initialSummaries = useMemo(() => getSessionSummaries(facilityId), [facilityId]);
+  const initialRaw = useMemo(() => getSessionRaw(facilityId), [facilityId]);
+
+  const [isLoading, setIsLoading] = useState<boolean>(!initialSummaries);
   const [error, setError] = useState<string | null>(null);
-  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(initialSummaries?.lastSyncedAt || null);
 
-  const [overviewSummary, setOverviewSummary] = useState<OperationsOverviewSummary | null>(null);
-  const [eventSummary, setEventSummary] = useState<EventAggregationSummary | null>(null);
-  const [workforceSummary, setWorkforceSummary] = useState<WorkforceSummary | null>(null);
-  const [maintenanceSummary, setMaintenanceSummary] = useState<MaintenanceSummary | null>(null);
+  const [overviewSummary, setOverviewSummary] = useState<OperationsOverviewSummary | null>(initialSummaries?.overview || null);
+  const [eventSummary, setEventSummary] = useState<EventAggregationSummary | null>(initialSummaries?.event || null);
+  const [workforceSummary, setWorkforceSummary] = useState<WorkforceSummary | null>(initialSummaries?.workforce || null);
+  const [maintenanceSummary, setMaintenanceSummary] = useState<MaintenanceSummary | null>(initialSummaries?.maintenance || null);
 
-  const [rawEvents, setRawEvents] = useState<EhsEventRecord[]>([]);
-  const [rawAttendance, setRawAttendance] = useState<WorkforceAttendanceRecord[]>([]);
-  const [rawMaintenance, setRawMaintenance] = useState<MaintenanceWorkOrderRecord[]>([]);
+  const [rawEvents, setRawEvents] = useState<EhsEventRecord[]>(initialRaw?.events || []);
+  const [rawAttendance, setRawAttendance] = useState<WorkforceAttendanceRecord[]>(initialRaw?.attendance || []);
+  const [rawMaintenance, setRawMaintenance] = useState<MaintenanceWorkOrderRecord[]>(initialRaw?.maintenance || []);
   const [readNotificationIds, setReadNotificationIds] = useState<Set<string>>(new Set());
 
   // Enforce strict light enterprise theme on root HTML element
@@ -184,27 +229,25 @@ export const EhsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const loadData = useCallback(async () => {
-    setIsLoading(true);
+    // Only show full-screen skeleton if we don't have summaries already displayed
+    if (!overviewSummary) {
+      setIsLoading(true);
+    }
     setError(null);
     const plantParam = facilityId !== 'ALL' ? facilityId : undefined;
 
     try {
+      // Stage 1: Fast Parallel Fetch of Aggregated Summaries (typically < 0.8s)
       const [
         overviewRes,
         evtSummaryRes,
         wfSummaryRes,
         mwoSummaryRes,
-        eventsRes,
-        attendanceRes,
-        maintenanceRes,
       ] = await Promise.all([
         ehsApi.getGlobalOverview(plantParam),
         ehsApi.getEventSummary(plantParam),
         ehsApi.getWorkforceSummary(plantParam),
         ehsApi.getMaintenanceSummary(plantParam),
-        ehsApi.getEvents(plantParam ? { plant_id: plantParam, limit: 500 } : { limit: 500 }),
-        ehsApi.getWorkforceRecords(plantParam ? { plant_id: plantParam, limit: 500 } : { limit: 500 }),
-        ehsApi.getMaintenanceWorkOrders(plantParam ? { plant_id: plantParam, limit: 500 } : { limit: 500 }),
       ]);
 
       const syncTs = new Date().toISOString();
@@ -212,10 +255,19 @@ export const EhsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setEventSummary(evtSummaryRes);
       setWorkforceSummary(wfSummaryRes);
       setMaintenanceSummary(mwoSummaryRes);
-      setRawEvents(eventsRes);
-      setRawAttendance(attendanceRes);
-      setRawMaintenance(maintenanceRes);
       setLastSyncedAt(syncTs);
+      setIsLoading(false); // Unblock the UI and render immediately!
+
+      try {
+        sessionStorage.setItem(`ehs_sum_${facilityId}`, JSON.stringify({
+          overview: overviewRes,
+          event: evtSummaryRes,
+          workforce: wfSummaryRes,
+          maintenance: mwoSummaryRes,
+          lastSyncedAt: syncTs,
+          ts: Date.now(),
+        }));
+      } catch {}
 
       setDatasetStatuses({
         fact_ehs_event: {
@@ -246,6 +298,28 @@ export const EhsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           lastUpdated: syncTs,
         },
       });
+
+      // Stage 2: Background Non-blocking Stream of Detailed Records
+      void Promise.all([
+        ehsApi.getEvents(plantParam ? { plant_id: plantParam, limit: 500 } : { limit: 500 }),
+        ehsApi.getWorkforceRecords(plantParam ? { plant_id: plantParam, limit: 500 } : { limit: 500 }),
+        ehsApi.getMaintenanceWorkOrders(plantParam ? { plant_id: plantParam, limit: 500 } : { limit: 500 }),
+      ]).then(([eventsRes, attendanceRes, maintenanceRes]) => {
+        setRawEvents(eventsRes);
+        setRawAttendance(attendanceRes);
+        setRawMaintenance(maintenanceRes);
+        try {
+          sessionStorage.setItem(`ehs_raw_${facilityId}`, JSON.stringify({
+            events: eventsRes,
+            attendance: attendanceRes,
+            maintenance: maintenanceRes,
+            ts: Date.now(),
+          }));
+        } catch {}
+      }).catch(bgErr => {
+        console.warn('Background record fetch warning:', bgErr);
+      });
+
     } catch (err: any) {
       const msg = err?.message || 'Unable to connect to FastAPI / Neon PostgreSQL backend.';
       setError(msg);
@@ -257,13 +331,13 @@ export const EhsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } finally {
       setIsLoading(false);
     }
-  }, [facilityId]);
+  }, [facilityId, overviewSummary]);
 
-  // Loading all datasets costs ~9 database requests. Pages such as Safety Monitoring or Data Connectors do not use
-  // them, so the load only starts once the user opens a page that does (and then stays loaded).
+  // Loading all datasets costs network requests. Preload on overview/operations/monitoring pages
   const { pathname } = useLocation();
   const needsData =
     pathname === '/' ||
+    pathname.startsWith('/overview') ||
     ['/operations', '/ehs-agent', '/agents', '/monitoring/digital-twin'].some(p => pathname.startsWith(p));
   const [dataWanted, setDataWanted] = useState(needsData);
   useEffect(() => {

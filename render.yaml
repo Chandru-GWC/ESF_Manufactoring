@@ -1,0 +1,55 @@
+services:
+  # ---------------------------------------------------------------------------
+  # Backend Web Service (FastAPI)
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: ehs-safety-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.1
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        sync: false  # Provide your PostgreSQL connection string in the Render Dashboard
+      - key: DB_SCHEMA
+        value: ehs_core
+      - key: CORS_ORIGINS
+        fromService:
+          type: web
+          name: ehs-safety-frontend
+          property: host
+      - key: DOMO_BASE_URL
+        value: https://gwcteq-partner.domo.com
+      - key: DOMO_AI_ENDPOINT
+        value: /api/ai/v1/text/generation
+      - key: DOMO_AI_MODEL
+        value: domo.domo_ai.domogpt-large-v2.2:anthropic
+      - key: DOMO_DEVELOPER_TOKEN
+        sync: false  # Provide your Domo developer token in the Render Dashboard
+      - key: EHS_ALERT_SCHEDULER
+        value: "true"
+
+  # ---------------------------------------------------------------------------
+  # Frontend Static Site (React + Vite)
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: ehs-safety-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    autoDeploy: true
+    routes:
+      # SPA fallback routing: reroute all unknown paths to index.html
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        value: https://backend-c076.onrender.com
