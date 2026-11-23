@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Cpu, Database, Eye, FileText, ShieldAlert, Sparkles, Terminal, Video, Wrench, Zap } from 'lucide-react';
+import { ArrowRight, Database, Eye, FileText, ShieldAlert, Sparkles, Terminal, Video, Wrench, Zap } from 'lucide-react';
 
 export type PipelineStageId =
   // Card 1: Source System & Grounded Tables
@@ -293,12 +293,6 @@ export const ArchitecturePipeline: React.FC<ArchitecturePipelineProps> = ({ acti
                   </span>
                 </div>
               </button>
-
-              {/* Subtitle badge info */}
-              <div className="pt-1 flex items-center justify-center gap-1.5 text-[9.5px] font-mono text-slate-500">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>Async Uvicorn · ASGI · Pydantic v2</span>
-              </div>
             </div>
           </div>
 
@@ -399,12 +393,6 @@ export const ArchitecturePipeline: React.FC<ArchitecturePipelineProps> = ({ acti
                   </span>
                 </div>
               </button>
-
-              {/* Subtitle badge info */}
-              <div className="pt-1 flex items-center justify-center gap-1.5 text-[9.5px] font-mono text-slate-500">
-                <Cpu className="w-3 h-3 text-purple-600" />
-                <span>Zero Hallucinations · Real-Time CV</span>
-              </div>
             </div>
           </div>
 
@@ -505,12 +493,6 @@ export const ArchitecturePipeline: React.FC<ArchitecturePipelineProps> = ({ acti
                   </span>
                 </div>
               </button>
-
-              {/* Subtitle badge info */}
-              <div className="pt-1 flex items-center justify-center gap-1.5 text-[9.5px] font-mono text-slate-500">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
-                <span>Zero Blindspots · Real-Time Safety Gate</span>
-              </div>
             </div>
           </div>
         </div>
