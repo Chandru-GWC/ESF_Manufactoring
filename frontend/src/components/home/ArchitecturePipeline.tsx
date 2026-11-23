@@ -1,23 +1,24 @@
 import React from 'react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Cpu, Database, Eye, FileText, ShieldAlert, Sparkles, Terminal, Video, Wrench, Zap } from 'lucide-react';
 
 export type PipelineStageId =
+  // Card 1: Source System & Grounded Tables
   | 'source'
-  | 'preparation'
-  | 'warehouse'
-  | 'consumption'
-  | 'outcome'
-  | 'erp-mes'
-  | 'excel-files'
-  | 'apis-etl'
-  | 'prepare-load'
-  | 'cleaned-data'
-  | 'semantic-model'
-  | 'aggregated-data'
-  | 'reports-bi'
-  | 'decisions'
-  | 'alerts'
-  | 'impact';
+  | 'source-events'
+  | 'source-attendance'
+  | 'source-maintenance'
+  // Card 2: FastAPI Gateway
+  | 'fastapi'
+  | 'agent-route'
+  | 'detection-route'
+  // Card 3: AI & Detection Core Engines
+  | 'engines'
+  | 'agent-engine'
+  | 'detection-engine'
+  // Card 4: Closed-Loop Outcomes
+  | 'outcomes'
+  | 'agent-outcomes'
+  | 'detection-outcomes';
 
 interface ArchitecturePipelineProps {
   activeStage: PipelineStageId;
@@ -25,10 +26,10 @@ interface ArchitecturePipelineProps {
 }
 
 /* ===========================================================================
-   High-Fidelity Vector Icons Matching the Sample Architecture Diagram
+   High-Fidelity Header Icons
    =========================================================================== */
 
-/** Factory icon for Stage 1 Header */
+/** Factory / Source Header Icon */
 const FactoryHeaderIcon = () => (
   <svg className="w-5 h-5 text-white shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M2 20h20M2 20V8l5 4V8l5 4V4h4l4 4v12" />
@@ -36,319 +37,165 @@ const FactoryHeaderIcon = () => (
   </svg>
 );
 
-/** Database icon for Stage 2 Header */
-const DatabaseHeaderIcon = () => (
+/** Server / FastAPI Gateway Header Icon */
+const FastApiHeaderIcon = () => (
   <svg className="w-5 h-5 text-white shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <ellipse cx="12" cy="5" rx="9" ry="3" />
-    <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
-    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+    <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
+    <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
+    <line x1="6" y1="6" x2="6.01" y2="6" />
+    <line x1="6" y1="18" x2="6.01" y2="18" />
   </svg>
 );
 
-/** Layered Stack / Warehouse icon for Stage 3 Header */
-const WarehouseHeaderIcon = () => (
+/** AI & Vision Engine Core Header Icon */
+const EnginesHeaderIcon = () => (
   <svg className="w-5 h-5 text-white shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <ellipse cx="12" cy="5" rx="8" ry="2.5" />
-    <path d="M4 5v5c0 1.38 3.58 2.5 8 2.5s8-1.12 8-2.5V5" />
-    <path d="M4 10v5c0 1.38 3.58 2.5 8 2.5s8-1.12 8-2.5V10" />
-    <path d="M4 15v4c0 1.38 3.58 2.5 8 2.5s8-1.12 8-2.5V15" />
+    <path d="M12 2a4 4 0 0 1 4 4c0 1.95-1.4 3.58-3.25 3.93L13 14h-2l.25-4.07A4.002 4.002 0 0 1 12 2z" />
+    <circle cx="12" cy="18" r="2" />
+    <path d="M6 10l-3 3 3 3" />
+    <path d="M18 10l3 3-3 3" />
   </svg>
 );
 
-/** Bar Chart icon for Stage 4 Header */
-const ConsumptionHeaderIcon = () => (
-  <svg className="w-5 h-5 text-white shrink-0" viewBox="0 0 24 24" fill="currentColor">
-    <rect x="3" y="12" width="4" height="9" rx="1" />
-    <rect x="10" y="7" width="4" height="14" rx="1" />
-    <rect x="17" y="3" width="4" height="18" rx="1" />
-  </svg>
-);
-
-/** Users / People icon for Stage 5 Header */
-const OutcomeHeaderIcon = () => (
-  <svg className="w-5 h-5 text-white shrink-0" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-    <circle cx="19" cy="8" r="2.5" />
-    <path d="M19 13.5c1.5 0 4 .75 4 2.25V18h-3v-2.25c0-.85-.4-1.6-1-2.25z" />
-    <circle cx="5" cy="8" r="2.5" />
-    <path d="M5 13.5c-1.5 0-4 .75-4 2.25V18h3v-2.25c0-.85.4-1.6 1-2.25z" />
-  </svg>
-);
-
-/* Card Visual Icons */
-
-/** ERP & MES: Blue database cylinder with green cog */
-const ErpMesIcon = () => (
-  <div className="relative w-7 h-7 shrink-0 flex items-center justify-center">
-    <svg className="w-6 h-6 text-sky-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <ellipse cx="12" cy="5" rx="8" ry="2.5" />
-      <path d="M4 5v9c0 1.38 3.58 2.5 8 2.5s8-1.12 8-2.5V5" />
-      <path d="M4 9.5c0 1.38 3.58 2.5 8 2.5s8-1.12 8-2.5" />
-    </svg>
-    <svg className="w-3.5 h-3.5 text-emerald-600 absolute -bottom-0.5 -right-0.5 animate-spin-slow bg-white rounded-full p-0.5 shadow-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-      <circle cx="12" cy="12" r="3" />
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-    </svg>
-  </div>
-);
-
-/** Excel & Files: Green file sheet icon with X */
-const ExcelFilesIcon = () => (
-  <div className="w-7 h-7 shrink-0 rounded-md bg-emerald-600 flex items-center justify-center shadow-sm">
-    <div className="text-white font-extrabold text-xs tracking-tighter flex items-center justify-center">
-      <span>X</span>
-    </div>
-  </div>
-);
-
-/** APIs & ETL: Purple Cloud with network bus / API */
-const ApisEtlIcon = () => (
-  <div className="w-7 h-7 shrink-0 rounded-md bg-purple-100 border border-purple-300 flex items-center justify-center shadow-sm">
-    <svg className="w-4 h-4 text-purple-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
-      <path d="M10 13h4M12 11v4" strokeWidth="2.5" />
-    </svg>
-  </div>
-);
-
-/** Stage 2 Center Graphic: Database with gears around it */
-const PrepareLoadGraphic = () => (
-  <div className="relative w-14 h-12 flex items-center justify-center my-0.5">
-    {/* Blue database cylinder */}
-    <svg className="w-10 h-10 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <ellipse cx="12" cy="6" rx="8" ry="2.5" fill="#dbeafe" />
-      <path d="M4 6v8c0 1.38 3.58 2.5 8 2.5s8-1.12 8-2.5V6" fill="#eff6ff" />
-      <path d="M4 10c0 1.38 3.58 2.5 8 2.5s8-1.12 8-2.5" />
-    </svg>
-    {/* Gear 1 */}
-    <svg className="w-5 h-5 text-sky-500 absolute -top-1 -right-0.5 animate-spin-slow drop-shadow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-      <circle cx="12" cy="12" r="3" fill="#bae6fd" />
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-    </svg>
-    {/* Gear 2 */}
-    <svg className="w-4 h-4 text-blue-700 absolute -bottom-1 -left-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-      <circle cx="12" cy="12" r="3" fill="#bfdbfe" />
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-    </svg>
-  </div>
-);
-
-/** Cleaned & Integrated Data: Purple isometric 3D cubes cluster */
-const Cubes3DIcon = () => (
-  <svg className="w-6 h-6 text-purple-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-    <polyline points="3.29 7 12 12 20.71 7" />
-    <line x1="12" y1="22" x2="12" y2="12" />
-  </svg>
-);
-
-/** Business / Semantic Model: Cyan connected graph nodes */
-const SemanticModelIcon = () => (
-  <svg className="w-6 h-6 text-cyan-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <circle cx="6" cy="18" r="3" fill="#cffafe" />
-    <circle cx="18" cy="18" r="3" fill="#cffafe" />
-    <circle cx="12" cy="6" r="3" fill="#cffafe" />
-    <line x1="8.59" y1="16.5" x2="15.42" y2="16.5" />
-    <line x1="7.5" y1="15.5" x2="10.5" y2="8.5" />
-    <line x1="16.5" y1="15.5" x2="13.5" y2="8.5" />
-  </svg>
-);
-
-/** Aggregated & Optimized Data: Green grid table spreadsheet */
-const TableGridIcon = () => (
-  <svg className="w-6 h-6 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <rect x="3" y="3" width="18" height="18" rx="2" fill="#d1fae5" />
-    <path d="M3 9h18M3 15h18M9 3v18M15 3v18" stroke="#059669" />
-  </svg>
-);
-
-/** Stage 4 Center Graphic: Desktop Monitor with colorful charts */
-const BiMonitorGraphic = () => (
-  <div className="w-14 h-12 flex items-center justify-center my-0.5">
-    <svg className="w-12 h-10 text-sky-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <rect x="2" y="3" width="20" height="14" rx="2" fill="#f8fafc" stroke="#0284c7" strokeWidth="2" />
-      <path d="M12 17v4M8 21h8" stroke="#0284c7" strokeWidth="2" strokeLinecap="round" />
-      {/* Bars on screen */}
-      <rect x="5" y="9" width="2" height="5" fill="#38bdf8" stroke="none" />
-      <rect x="8" y="7" width="2" height="7" fill="#0284c7" stroke="none" />
-      {/* Pie slice on screen */}
-      <circle cx="15.5" cy="10" r="3.5" fill="#f59e0b" stroke="none" />
-      <path d="M15.5 6.5A3.5 3.5 0 0 1 19 10h-3.5z" fill="#10b981" />
-    </svg>
-  </div>
-);
-
-/** Power BI yellow bar icon badge */
-const PowerBiBadge = () => (
-  <span className="w-6 h-6 rounded bg-amber-400 p-0.5 flex items-end justify-center gap-0.5 shadow-sm" title="Power BI">
-    <span className="w-1 h-2 bg-amber-900/60 rounded-xs" />
-    <span className="w-1 h-3.5 bg-amber-900/70 rounded-xs" />
-    <span className="w-1 h-4.5 bg-amber-900 rounded-xs" />
-  </span>
-);
-
-/** Tableau cross scatter badge */
-const TableauBadge = () => (
-  <span className="w-6 h-6 rounded bg-white border border-slate-200 p-0.5 flex items-center justify-center shadow-sm" title="Tableau">
-    <svg className="w-4 h-4 text-indigo-600" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M11 2h2v4h-2zm-6 5h2v4H5zm12 0h2v4h-2zM2 11h4v2H2zm16 0h4v2h-4zm-7 0h2v2h-2zm-6 5h2v4H5zm12 0h2v4h-2zm-6 3h2v3h-2z" />
-    </svg>
-  </span>
-);
-
-/** Custom Apps / Grid badge */
-const CustomAppsBadge = () => (
-  <span className="w-6 h-6 rounded bg-blue-600 p-1 flex items-center justify-center shadow-sm" title="Custom Apps">
-    <div className="grid grid-cols-3 gap-0.5">
-      <span className="w-1 h-1 bg-white rounded-xs" />
-      <span className="w-1 h-1 bg-white rounded-xs" />
-      <span className="w-1 h-1 bg-white rounded-xs" />
-      <span className="w-1 h-1 bg-white rounded-xs" />
-      <span className="w-1 h-1 bg-white rounded-xs" />
-      <span className="w-1 h-1 bg-white rounded-xs" />
-      <span className="w-1 h-1 bg-white rounded-xs" />
-      <span className="w-1 h-1 bg-white rounded-xs" />
-      <span className="w-1 h-1 bg-white rounded-xs" />
-    </div>
-  </span>
-);
-
-/** Data-Driven Decisions: Orange upward trend chart with arrow */
-const TrendDecisionsIcon = () => (
-  <svg className="w-6 h-6 text-amber-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-    <polyline points="16 7 22 7 22 13" />
-    <rect x="3" y="16" width="2" height="4" fill="#fed7aa" stroke="#f97316" />
-    <rect x="8" y="12" width="2" height="8" fill="#fed7aa" stroke="#f97316" />
-    <rect x="13" y="14" width="2" height="6" fill="#fed7aa" stroke="#f97316" />
-    <rect x="18" y="8" width="2" height="12" fill="#fed7aa" stroke="#f97316" />
-  </svg>
-);
-
-/** Alerts & Early Actions: Golden warning bell */
-const AlertsBellIcon = () => (
-  <div className="relative w-6 h-6 shrink-0 flex items-center justify-center">
-    <svg className="w-5 h-5 text-amber-500 fill-amber-400" viewBox="0 0 24 24">
-      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-    </svg>
-    <span className="w-1.5 h-1.5 rounded-full bg-red-500 absolute top-0 right-0 animate-ping" />
-  </div>
-);
-
-/** Operational & Business Impact: Royal Blue bullseye target with arrow */
-const BullseyeImpactIcon = () => (
-  <svg className="w-6 h-6 text-sky-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <circle cx="12" cy="12" r="10" stroke="#0284c7" />
-    <circle cx="12" cy="12" r="6" stroke="#0284c7" fill="#e0f2fe" />
-    <circle cx="12" cy="12" r="2" fill="#0369a1" />
+/** Closed-Loop Outcomes Header Icon */
+const OutcomesHeaderIcon = () => (
+  <svg className="w-5 h-5 text-white shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
   </svg>
 );
 
 /* ===========================================================================
-   Main Pipeline Layout Component
+   4-Card Architecture Pipeline Layout
    =========================================================================== */
 
 export const ArchitecturePipeline: React.FC<ArchitecturePipelineProps> = ({ activeStage, onSelectStage }) => {
+  const isCard1Active =
+    activeStage === 'source' ||
+    activeStage === 'source-events' ||
+    activeStage === 'source-attendance' ||
+    activeStage === 'source-maintenance';
+
+  const isCard2Active =
+    activeStage === 'fastapi' ||
+    activeStage === 'agent-route' ||
+    activeStage === 'detection-route';
+
+  const isCard3Active =
+    activeStage === 'engines' ||
+    activeStage === 'agent-engine' ||
+    activeStage === 'detection-engine';
+
+  const isCard4Active =
+    activeStage === 'outcomes' ||
+    activeStage === 'agent-outcomes' ||
+    activeStage === 'detection-outcomes';
+
   return (
     <div className="w-full">
-      {/* 5-Column Grid with Inter-Column Flow Arrows */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 items-stretch relative">
+      {/* 4-Column Grid with perfectly aligned straight headers */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 items-stretch relative">
 
         {/* -------------------------------------------------------------------------
-            COLUMN 1: 1. SOURCE SYSTEM (DATA INTEGRATION)
+            CARD 1: 1. SOURCE SYSTEM (GROUNDED DATA)
             ------------------------------------------------------------------------- */}
-        <div className="relative flex flex-col">
+        <div className="relative flex flex-col h-full">
           <div
-            className={`group flex flex-col flex-1 rounded-2xl border-2 overflow-hidden transition-all duration-200 bg-white shadow-sm ${
-              activeStage === 'source' || activeStage === 'erp-mes' || activeStage === 'excel-files' || activeStage === 'apis-etl'
+            className={`group flex flex-col flex-1 h-full rounded-2xl border-2 overflow-hidden transition-all duration-200 bg-white shadow-sm ${
+              isCard1Active
                 ? 'border-red-600 ring-2 ring-red-500/20 shadow-md'
                 : 'border-red-200 hover:border-red-400'
             }`}
           >
-            {/* Header Banner */}
+            {/* Header Banner - Fixed Height h-[76px] for perfectly straight alignment */}
             <button
               type="button"
               onClick={() => onSelectStage('source')}
-              className="w-full bg-gradient-to-r from-[#991b1b] to-[#b91c1c] text-white px-3 py-2.5 flex items-center gap-2.5 text-left focus:outline-none transition-colors hover:brightness-105"
+              className="w-full h-[76px] min-h-[76px] max-h-[76px] bg-gradient-to-r from-[#991b1b] to-[#b91c1c] text-white px-3 flex items-center gap-2.5 text-left focus:outline-none transition-colors hover:brightness-105"
             >
               <FactoryHeaderIcon />
-              <div className="min-w-0 flex-1">
-                <h3 className="text-xs font-black uppercase tracking-wider text-white leading-tight">
+              <div className="min-w-0 flex-1 flex flex-col justify-center">
+                <h3 className="text-xs font-black uppercase tracking-wider text-white leading-tight truncate">
                   1. SOURCE SYSTEM
                 </h3>
-                <p className="text-[10px] text-white/85 font-medium tracking-wide">
-                  (DATA INTEGRATION)
+                <p className="text-[10px] text-white/85 font-medium tracking-wide truncate">
+                  (GROUNDED DATA)
                 </p>
               </div>
             </button>
 
-            {/* Cards Body */}
-            <div className="p-2.5 space-y-2 flex-1 flex flex-col justify-between bg-slate-50/40">
-              {/* Card 1: ERP & MES */}
+            {/* Inner Nodes: 3 Grounded Tables */}
+            <div className="p-2.5 space-y-2 flex-1 flex flex-col justify-start bg-slate-50/40">
+              {/* Node 1: fact_ehs_event */}
               <button
                 type="button"
-                onClick={() => onSelectStage('erp-mes')}
+                onClick={() => onSelectStage('source-events')}
                 className={`w-full text-left p-2 rounded-xl border transition-all flex items-center gap-2.5 ${
-                  activeStage === 'erp-mes'
-                    ? 'border-sky-500 bg-sky-100/90 shadow-sm'
-                    : 'border-sky-200 bg-sky-50/70 hover:bg-sky-100/60'
+                  activeStage === 'source-events'
+                    ? 'border-red-500 bg-red-100/90 shadow-sm ring-1 ring-red-400'
+                    : 'border-red-200 bg-red-50/70 hover:bg-red-100/60'
                 }`}
               >
-                <ErpMesIcon />
+                <div className="w-7 h-7 shrink-0 rounded-md bg-red-600 flex items-center justify-center text-white shadow-sm">
+                  <ShieldAlert className="w-4 h-4" />
+                </div>
                 <div className="min-w-0 flex-1">
                   <span className="block text-xs font-extrabold text-slate-800 leading-snug truncate">
-                    ERP &amp; MES
+                    fact_ehs_event
                   </span>
                   <span className="block text-[10px] text-slate-600 font-medium leading-tight truncate">
-                    (SAP / Oracle / Etc.)
+                    (400 events · Hazards &amp; Actions)
                   </span>
                 </div>
               </button>
 
-              {/* Card 2: Excel & Files */}
+              {/* Node 2: fact_workforce_attendance */}
               <button
                 type="button"
-                onClick={() => onSelectStage('excel-files')}
+                onClick={() => onSelectStage('source-attendance')}
                 className={`w-full text-left p-2 rounded-xl border transition-all flex items-center gap-2.5 ${
-                  activeStage === 'excel-files'
-                    ? 'border-emerald-500 bg-emerald-100/90 shadow-sm'
+                  activeStage === 'source-attendance'
+                    ? 'border-emerald-500 bg-emerald-100/90 shadow-sm ring-1 ring-emerald-400'
                     : 'border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100/60'
                 }`}
               >
-                <ExcelFilesIcon />
+                <div className="w-7 h-7 shrink-0 rounded-md bg-emerald-600 flex items-center justify-center text-white shadow-sm">
+                  <Database className="w-4 h-4" />
+                </div>
                 <div className="min-w-0 flex-1">
                   <span className="block text-xs font-extrabold text-slate-800 leading-snug truncate">
-                    Excel &amp; Files
+                    fact_workforce_attendance
                   </span>
                   <span className="block text-[10px] text-slate-600 font-medium leading-tight truncate">
-                    (CSV / XLSX / Etc.)
+                    (500 shifts · Rosters &amp; Training)
                   </span>
                 </div>
               </button>
 
-              {/* Card 3: APIs & ETL */}
+              {/* Node 3: fact_maintenance_work_order */}
               <button
                 type="button"
-                onClick={() => onSelectStage('apis-etl')}
+                onClick={() => onSelectStage('source-maintenance')}
                 className={`w-full text-left p-2 rounded-xl border transition-all flex items-center gap-2.5 ${
-                  activeStage === 'apis-etl'
-                    ? 'border-purple-500 bg-purple-100/90 shadow-sm'
-                    : 'border-purple-200 bg-purple-50/70 hover:bg-purple-100/60'
+                  activeStage === 'source-maintenance'
+                    ? 'border-sky-500 bg-sky-100/90 shadow-sm ring-1 ring-sky-400'
+                    : 'border-sky-200 bg-sky-50/70 hover:bg-sky-100/60'
                 }`}
               >
-                <ApisEtlIcon />
+                <div className="w-7 h-7 shrink-0 rounded-md bg-sky-600 flex items-center justify-center text-white shadow-sm">
+                  <Wrench className="w-4 h-4" />
+                </div>
                 <div className="min-w-0 flex-1">
                   <span className="block text-xs font-extrabold text-slate-800 leading-snug truncate">
-                    APIs &amp; ETL
+                    fact_maintenance_work_order
                   </span>
                   <span className="block text-[10px] text-slate-600 font-medium leading-tight truncate">
-                    (REST / OData / Etc.)
+                    (300 orders · P1 &amp; Equipment)
                   </span>
                 </div>
               </button>
             </div>
           </div>
+
           {/* Inter-column connector arrow */}
           <div className="hidden lg:flex items-center justify-center absolute -right-2 top-1/2 -translate-y-1/2 z-10 pointer-events-none text-slate-400">
             <ArrowRight className="w-4 h-4 stroke-[2.5]" />
@@ -356,70 +203,105 @@ export const ArchitecturePipeline: React.FC<ArchitecturePipelineProps> = ({ acti
         </div>
 
         {/* -------------------------------------------------------------------------
-            COLUMN 2: 2. DATA PREPARATION (ETL / DATA PIPELINE)
+            CARD 2: 2. FASTAPI GATEWAY (ROUTING LAYER) - EXACT 2 NODES
             ------------------------------------------------------------------------- */}
-        <div className="relative flex flex-col">
+        <div className="relative flex flex-col h-full">
           <div
-            className={`group flex flex-col flex-1 rounded-2xl border-2 overflow-hidden transition-all duration-200 bg-white shadow-sm ${
-              activeStage === 'preparation' || activeStage === 'prepare-load'
+            className={`group flex flex-col flex-1 h-full rounded-2xl border-2 overflow-hidden transition-all duration-200 bg-white shadow-sm ${
+              isCard2Active
                 ? 'border-blue-600 ring-2 ring-blue-500/20 shadow-md'
                 : 'border-blue-200 hover:border-blue-400'
             }`}
           >
-            {/* Header Banner */}
+            {/* Header Banner - Fixed Height h-[76px] */}
             <button
               type="button"
-              onClick={() => onSelectStage('preparation')}
-              className="w-full bg-gradient-to-r from-[#1d4ed8] to-[#2563eb] text-white px-3 py-2.5 flex items-center gap-2.5 text-left focus:outline-none transition-colors hover:brightness-105"
+              onClick={() => onSelectStage('fastapi')}
+              className="w-full h-[76px] min-h-[76px] max-h-[76px] bg-gradient-to-r from-[#1d4ed8] to-[#2563eb] text-white px-3 flex items-center gap-2.5 text-left focus:outline-none transition-colors hover:brightness-105"
             >
-              <DatabaseHeaderIcon />
-              <div className="min-w-0 flex-1">
-                <h3 className="text-xs font-black uppercase tracking-wider text-white leading-tight">
-                  2. DATA PREPARATION
+              <FastApiHeaderIcon />
+              <div className="min-w-0 flex-1 flex flex-col justify-center">
+                <h3 className="text-xs font-black uppercase tracking-wider text-white leading-tight truncate">
+                  2. FASTAPI GATEWAY
                 </h3>
-                <p className="text-[10px] text-white/85 font-medium tracking-wide">
-                  (ETL / DATA PIPELINE)
+                <p className="text-[10px] text-white/85 font-medium tracking-wide truncate">
+                  (API &amp; ROUTING LAYER)
                 </p>
               </div>
             </button>
 
-            {/* Body Content */}
-            <button
-              type="button"
-              onClick={() => onSelectStage('prepare-load')}
-              className={`p-3 flex-1 flex flex-col items-center justify-center text-center space-y-2 bg-slate-50/40 transition-colors ${
-                activeStage === 'prepare-load' ? 'bg-blue-50/80' : 'hover:bg-blue-50/40'
-              }`}
-            >
-              {/* Database & Gears Illustration */}
-              <PrepareLoadGraphic />
+            {/* Inner Nodes: Exactly 2 Nodes as requested */}
+            <div className="p-2.5 space-y-2 flex-1 flex flex-col justify-start bg-slate-50/40">
+              {/* Node 1: Agent Calling Route */}
+              <button
+                type="button"
+                onClick={() => onSelectStage('agent-route')}
+                className={`w-full text-left p-2.5 rounded-xl border transition-all flex items-center gap-2.5 ${
+                  activeStage === 'agent-route'
+                    ? 'border-blue-600 bg-blue-100/90 shadow-sm ring-1 ring-blue-500'
+                    : 'border-blue-200 bg-blue-50/70 hover:bg-blue-100/60'
+                }`}
+              >
+                <div className="w-8 h-8 shrink-0 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-sm">
+                  <Terminal className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="block text-xs font-black text-slate-800 leading-snug truncate">
+                      Agent Calling Route
+                    </span>
+                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-blue-200 text-blue-800 shrink-0">
+                      POST
+                    </span>
+                  </div>
+                  <span className="block font-mono text-[10px] text-blue-700 font-semibold truncate mt-0.5">
+                    /api/v1/ai/query
+                  </span>
+                  <span className="block text-[9.5px] text-slate-500 truncate">
+                    Natural language NLQ ➔ SQL dispatch
+                  </span>
+                </div>
+              </button>
 
-              {/* PREPARE & LOAD Title */}
-              <div>
-                <span className="block text-xs font-black tracking-wide text-blue-900 uppercase">
-                  PREPARE &amp; LOAD
-                </span>
+              {/* Node 2: Detection Calling Route */}
+              <button
+                type="button"
+                onClick={() => onSelectStage('detection-route')}
+                className={`w-full text-left p-2.5 rounded-xl border transition-all flex items-center gap-2.5 ${
+                  activeStage === 'detection-route'
+                    ? 'border-indigo-600 bg-indigo-100/90 shadow-sm ring-1 ring-indigo-500'
+                    : 'border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100/60'
+                }`}
+              >
+                <div className="w-8 h-8 shrink-0 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-sm">
+                  <Video className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="block text-xs font-black text-slate-800 leading-snug truncate">
+                      Detection Calling Route
+                    </span>
+                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-indigo-200 text-indigo-800 shrink-0">
+                      POST
+                    </span>
+                  </div>
+                  <span className="block font-mono text-[10px] text-indigo-700 font-semibold truncate mt-0.5">
+                    /api/v1/detection/upload
+                  </span>
+                  <span className="block text-[9.5px] text-slate-500 truncate">
+                    Video streaming &amp; CV model dispatch
+                  </span>
+                </div>
+              </button>
+
+              {/* Subtitle badge info */}
+              <div className="pt-1 flex items-center justify-center gap-1.5 text-[9.5px] font-mono text-slate-500">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Async Uvicorn · ASGI · Pydantic v2</span>
               </div>
-
-              {/* Extract, Transform, Load Pills */}
-              <div className="flex flex-wrap items-center justify-center gap-1.5 pt-0.5">
-                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold border border-teal-300 bg-teal-50 text-teal-800">
-                  Extract
-                </span>
-                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold border border-cyan-300 bg-cyan-50 text-cyan-800">
-                  Transform
-                </span>
-                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold border border-fuchsia-300 bg-fuchsia-50 text-fuchsia-800">
-                  Load
-                </span>
-              </div>
-
-              {/* Footer subtitle */}
-              <span className="block text-[10px] font-semibold text-slate-500 pt-1">
-                (SSIS / ADF / ETL / RPA)
-              </span>
-            </button>
+            </div>
           </div>
+
           {/* Inter-column connector arrow */}
           <div className="hidden lg:flex items-center justify-center absolute -right-2 top-1/2 -translate-y-1/2 z-10 pointer-events-none text-slate-400">
             <ArrowRight className="w-4 h-4 stroke-[2.5]" />
@@ -427,99 +309,105 @@ export const ArchitecturePipeline: React.FC<ArchitecturePipelineProps> = ({ acti
         </div>
 
         {/* -------------------------------------------------------------------------
-            COLUMN 3: 3. DATA & BUSINESS LAYER (DATA WAREHOUSE / SEMANTIC MODEL)
+            CARD 3: 3. AI & DETECTION ENGINES (INTELLIGENCE CORE) - EXACT 2 NODES
             ------------------------------------------------------------------------- */}
-        <div className="relative flex flex-col">
+        <div className="relative flex flex-col h-full">
           <div
-            className={`group flex flex-col flex-1 rounded-2xl border-2 overflow-hidden transition-all duration-200 bg-white shadow-sm ${
-              activeStage === 'warehouse' || activeStage === 'cleaned-data' || activeStage === 'semantic-model' || activeStage === 'aggregated-data'
+            className={`group flex flex-col flex-1 h-full rounded-2xl border-2 overflow-hidden transition-all duration-200 bg-white shadow-sm ${
+              isCard3Active
                 ? 'border-purple-600 ring-2 ring-purple-500/20 shadow-md'
                 : 'border-purple-200 hover:border-purple-400'
             }`}
           >
-            {/* Header Banner */}
+            {/* Header Banner - Fixed Height h-[76px] */}
             <button
               type="button"
-              onClick={() => onSelectStage('warehouse')}
-              className="w-full bg-gradient-to-r from-[#581c87] to-[#7e22ce] text-white px-3 py-2.5 flex items-center gap-2.5 text-left focus:outline-none transition-colors hover:brightness-105"
+              onClick={() => onSelectStage('engines')}
+              className="w-full h-[76px] min-h-[76px] max-h-[76px] bg-gradient-to-r from-[#581c87] to-[#7e22ce] text-white px-3 flex items-center gap-2.5 text-left focus:outline-none transition-colors hover:brightness-105"
             >
-              <WarehouseHeaderIcon />
-              <div className="min-w-0 flex-1">
-                <h3 className="text-xs font-black uppercase tracking-wider text-white leading-tight">
-                  3. DATA &amp; BUSINESS LAYER
+              <EnginesHeaderIcon />
+              <div className="min-w-0 flex-1 flex flex-col justify-center">
+                <h3 className="text-xs font-black uppercase tracking-wider text-white leading-tight truncate">
+                  3. AI &amp; DETECTION ENGINES
                 </h3>
-                <p className="text-[10px] text-white/85 font-medium tracking-wide">
-                  (DATA WAREHOUSE / SEMANTIC MODEL)
+                <p className="text-[10px] text-white/85 font-medium tracking-wide truncate">
+                  (INTELLIGENCE CORE)
                 </p>
               </div>
             </button>
 
-            {/* Cards Body */}
-            <div className="p-2.5 space-y-2 flex-1 flex flex-col justify-between bg-slate-50/40">
-              {/* Card 1: Cleaned & Integrated Data */}
+            {/* Inner Nodes: Exactly 2 Nodes as requested */}
+            <div className="p-2.5 space-y-2 flex-1 flex flex-col justify-start bg-slate-50/40">
+              {/* Node 1: Agent Node */}
               <button
                 type="button"
-                onClick={() => onSelectStage('cleaned-data')}
-                className={`w-full text-left p-2 rounded-xl border transition-all flex items-center gap-2.5 ${
-                  activeStage === 'cleaned-data'
-                    ? 'border-purple-500 bg-purple-100/90 shadow-sm'
+                onClick={() => onSelectStage('agent-engine')}
+                className={`w-full text-left p-2.5 rounded-xl border transition-all flex items-center gap-2.5 ${
+                  activeStage === 'agent-engine'
+                    ? 'border-purple-600 bg-purple-100/90 shadow-sm ring-1 ring-purple-500'
                     : 'border-purple-200 bg-purple-50/70 hover:bg-purple-100/60'
                 }`}
               >
-                <Cubes3DIcon />
+                <div className="w-8 h-8 shrink-0 rounded-lg bg-purple-600 text-white flex items-center justify-center shadow-sm">
+                  <Sparkles className="w-4 h-4" />
+                </div>
                 <div className="min-w-0 flex-1">
-                  <span className="block text-xs font-extrabold text-slate-800 leading-snug truncate">
-                    Cleaned &amp; Integrated Data
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="block text-xs font-black text-slate-800 leading-snug truncate">
+                      EHS Agent Node
+                    </span>
+                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-purple-200 text-purple-800 shrink-0">
+                      TEXT-TO-SQL
+                    </span>
+                  </div>
+                  <span className="block text-[10px] text-purple-800 font-semibold truncate mt-0.5">
+                    DomoGPT Large v2.2 Core
                   </span>
-                  <span className="block text-[10px] text-slate-600 font-medium leading-tight truncate">
-                    (Single Source of Truth)
+                  <span className="block text-[9.5px] text-slate-500 truncate">
+                    Schema grounding &amp; citations
                   </span>
                 </div>
               </button>
 
-              {/* Card 2: Business / Semantic Model */}
+              {/* Node 2: Detection Node */}
               <button
                 type="button"
-                onClick={() => onSelectStage('semantic-model')}
-                className={`w-full text-left p-2 rounded-xl border transition-all flex items-center gap-2.5 ${
-                  activeStage === 'semantic-model'
-                    ? 'border-cyan-500 bg-cyan-100/90 shadow-sm'
-                    : 'border-cyan-200 bg-cyan-50/70 hover:bg-cyan-100/60'
+                onClick={() => onSelectStage('detection-engine')}
+                className={`w-full text-left p-2.5 rounded-xl border transition-all flex items-center gap-2.5 ${
+                  activeStage === 'detection-engine'
+                    ? 'border-fuchsia-600 bg-fuchsia-100/90 shadow-sm ring-1 ring-fuchsia-500'
+                    : 'border-fuchsia-200 bg-fuchsia-50/70 hover:bg-fuchsia-100/60'
                 }`}
               >
-                <SemanticModelIcon />
+                <div className="w-8 h-8 shrink-0 rounded-lg bg-fuchsia-600 text-white flex items-center justify-center shadow-sm">
+                  <Eye className="w-4 h-4" />
+                </div>
                 <div className="min-w-0 flex-1">
-                  <span className="block text-xs font-extrabold text-slate-800 leading-snug truncate">
-                    Business / Semantic Model
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="block text-xs font-black text-slate-800 leading-snug truncate">
+                      Detection Node
+                    </span>
+                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-fuchsia-200 text-fuchsia-800 shrink-0">
+                      CV MODELS
+                    </span>
+                  </div>
+                  <span className="block text-[10px] text-fuchsia-800 font-semibold truncate mt-0.5">
+                    OpenFall · YOLOv8 · OWLv2
                   </span>
-                  <span className="block text-[10px] text-slate-600 font-medium leading-tight truncate">
-                    (Metrics / KPIs / Logic)
+                  <span className="block text-[9.5px] text-slate-500 truncate">
+                    6 Hazard Computer Vision models
                   </span>
                 </div>
               </button>
 
-              {/* Card 3: Aggregated & Optimized Data */}
-              <button
-                type="button"
-                onClick={() => onSelectStage('aggregated-data')}
-                className={`w-full text-left p-2 rounded-xl border transition-all flex items-center gap-2.5 ${
-                  activeStage === 'aggregated-data'
-                    ? 'border-emerald-500 bg-emerald-100/90 shadow-sm'
-                    : 'border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100/60'
-                }`}
-              >
-                <TableGridIcon />
-                <div className="min-w-0 flex-1">
-                  <span className="block text-xs font-extrabold text-slate-800 leading-snug truncate">
-                    Aggregated &amp; Optimized Data
-                  </span>
-                  <span className="block text-[10px] text-slate-600 font-medium leading-tight truncate">
-                    (Facts / Dimensions / Views)
-                  </span>
-                </div>
-              </button>
+              {/* Subtitle badge info */}
+              <div className="pt-1 flex items-center justify-center gap-1.5 text-[9.5px] font-mono text-slate-500">
+                <Cpu className="w-3 h-3 text-purple-600" />
+                <span>Zero Hallucinations · Real-Time CV</span>
+              </div>
             </div>
           </div>
+
           {/* Inter-column connector arrow */}
           <div className="hidden lg:flex items-center justify-center absolute -right-2 top-1/2 -translate-y-1/2 z-10 pointer-events-none text-slate-400">
             <ArrowRight className="w-4 h-4 stroke-[2.5]" />
@@ -527,164 +415,103 @@ export const ArchitecturePipeline: React.FC<ArchitecturePipelineProps> = ({ acti
         </div>
 
         {/* -------------------------------------------------------------------------
-            COLUMN 4: 4. CONSUMPTION (BI / REPORTING / APPS)
+            CARD 4: 4. CLOSED-LOOP OUTCOMES (INSIGHTS & ACTIONS) - EXACT 2 NODES
             ------------------------------------------------------------------------- */}
-        <div className="relative flex flex-col">
+        <div className="relative flex flex-col h-full">
           <div
-            className={`group flex flex-col flex-1 rounded-2xl border-2 overflow-hidden transition-all duration-200 bg-white shadow-sm ${
-              activeStage === 'consumption' || activeStage === 'reports-bi'
-                ? 'border-blue-600 ring-2 ring-blue-500/20 shadow-md'
-                : 'border-blue-200 hover:border-blue-400'
+            className={`group flex flex-col flex-1 h-full rounded-2xl border-2 overflow-hidden transition-all duration-200 bg-white shadow-sm ${
+              isCard4Active
+                ? 'border-red-600 ring-2 ring-red-500/20 shadow-md'
+                : 'border-red-200 hover:border-red-400'
             }`}
           >
-            {/* Header Banner */}
+            {/* Header Banner - Fixed Height h-[76px] */}
             <button
               type="button"
-              onClick={() => onSelectStage('consumption')}
-              className="w-full bg-gradient-to-r from-[#1e40af] to-[#2563eb] text-white px-3 py-2.5 flex items-center gap-2.5 text-left focus:outline-none transition-colors hover:brightness-105"
+              onClick={() => onSelectStage('outcomes')}
+              className="w-full h-[76px] min-h-[76px] max-h-[76px] bg-gradient-to-r from-[#991b1b] to-[#b91c1c] text-white px-3 flex items-center gap-2.5 text-left focus:outline-none transition-colors hover:brightness-105"
             >
-              <ConsumptionHeaderIcon />
-              <div className="min-w-0 flex-1">
-                <h3 className="text-xs font-black uppercase tracking-wider text-white leading-tight">
-                  4. CONSUMPTION
+              <OutcomesHeaderIcon />
+              <div className="min-w-0 flex-1 flex flex-col justify-center">
+                <h3 className="text-xs font-black uppercase tracking-wider text-white leading-tight truncate">
+                  4. CLOSED-LOOP OUTCOMES
                 </h3>
-                <p className="text-[10px] text-white/85 font-medium tracking-wide">
-                  (BI / REPORTING / APPS)
+                <p className="text-[10px] text-white/85 font-medium tracking-wide truncate">
+                  (INSIGHTS &amp; ACTIONS)
                 </p>
               </div>
             </button>
 
-            {/* Body Content */}
-            <button
-              type="button"
-              onClick={() => onSelectStage('reports-bi')}
-              className={`p-3 flex-1 flex flex-col items-center justify-center text-center space-y-2 bg-slate-50/40 transition-colors ${
-                activeStage === 'reports-bi' ? 'bg-blue-50/80' : 'hover:bg-blue-50/40'
-              }`}
-            >
-              {/* Desktop Monitor Illustration */}
-              <BiMonitorGraphic />
+            {/* Inner Nodes: Exactly 2 Nodes as requested */}
+            <div className="p-2.5 space-y-2 flex-1 flex flex-col justify-start bg-slate-50/40">
+              {/* Node 1: Agent Outcomes */}
+              <button
+                type="button"
+                onClick={() => onSelectStage('agent-outcomes')}
+                className={`w-full text-left p-2.5 rounded-xl border transition-all flex items-center gap-2.5 ${
+                  activeStage === 'agent-outcomes'
+                    ? 'border-amber-500 bg-amber-100/90 shadow-sm ring-1 ring-amber-400'
+                    : 'border-amber-200 bg-amber-50/70 hover:bg-amber-100/60'
+                }`}
+              >
+                <div className="w-8 h-8 shrink-0 rounded-lg bg-amber-600 text-white flex items-center justify-center shadow-sm">
+                  <FileText className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="block text-xs font-black text-slate-800 leading-snug truncate">
+                      Agent Outcomes
+                    </span>
+                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-200 text-amber-800 shrink-0">
+                      AUDITS
+                    </span>
+                  </div>
+                  <span className="block text-[10px] text-amber-900 font-semibold truncate mt-0.5">
+                    Verified SQL &amp; KPI Citations
+                  </span>
+                  <span className="block text-[9.5px] text-slate-500 truncate">
+                    Root-cause answers &amp; action tracking
+                  </span>
+                </div>
+              </button>
 
-              {/* Reports & Dashboards Title */}
-              <div>
-                <span className="block text-xs font-black text-slate-900 leading-tight">
-                  Reports &amp; Dashboards
-                </span>
-                <span className="block text-[10px] text-slate-600 font-medium leading-tight">
-                  (Power BI / Tableau / Custom Apps)
-                </span>
+              {/* Node 2: Detection Outcomes */}
+              <button
+                type="button"
+                onClick={() => onSelectStage('detection-outcomes')}
+                className={`w-full text-left p-2.5 rounded-xl border transition-all flex items-center gap-2.5 ${
+                  activeStage === 'detection-outcomes'
+                    ? 'border-rose-500 bg-rose-100/90 shadow-sm ring-1 ring-rose-400'
+                    : 'border-rose-200 bg-rose-50/70 hover:bg-rose-100/60'
+                }`}
+              >
+                <div className="w-8 h-8 shrink-0 rounded-lg bg-rose-600 text-white flex items-center justify-center shadow-sm">
+                  <Zap className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="block text-xs font-black text-slate-800 leading-snug truncate">
+                      Detection Outcomes
+                    </span>
+                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-rose-200 text-rose-800 shrink-0">
+                      ALERTS
+                    </span>
+                  </div>
+                  <span className="block text-[10px] text-rose-900 font-semibold truncate mt-0.5">
+                    Annotated Video &amp; Bounding Boxes
+                  </span>
+                  <span className="block text-[9.5px] text-slate-500 truncate">
+                    Real-time alarms &amp; safety tickets
+                  </span>
+                </div>
+              </button>
+
+              {/* Subtitle badge info */}
+              <div className="pt-1 flex items-center justify-center gap-1.5 text-[9.5px] font-mono text-slate-500">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+                <span>Zero Blindspots · Real-Time Safety Gate</span>
               </div>
-
-              {/* App Badges: Power BI, Tableau, Custom Apps */}
-              <div className="flex items-center justify-center gap-2 pt-0.5">
-                <PowerBiBadge />
-                <TableauBadge />
-                <CustomAppsBadge />
-              </div>
-
-              {/* Footer subtitle */}
-              <span className="block text-[10px] font-semibold text-slate-500 pt-1">
-                (Power BI / Tableau / Etc.)
-              </span>
-            </button>
-          </div>
-          {/* Inter-column connector arrow */}
-          <div className="hidden lg:flex items-center justify-center absolute -right-2 top-1/2 -translate-y-1/2 z-10 pointer-events-none text-slate-400">
-            <ArrowRight className="w-4 h-4 stroke-[2.5]" />
-          </div>
-        </div>
-
-        {/* -------------------------------------------------------------------------
-            COLUMN 5: 5. BUSINESS OUTCOME (INSIGHTS & ACTIONS)
-            ------------------------------------------------------------------------- */}
-        <div
-          className={`group flex flex-col rounded-2xl border-2 overflow-hidden transition-all duration-200 bg-white shadow-sm ${
-            activeStage === 'outcome' || activeStage === 'decisions' || activeStage === 'alerts' || activeStage === 'impact'
-              ? 'border-red-600 ring-2 ring-red-500/20 shadow-md'
-              : 'border-red-200 hover:border-red-400'
-          }`}
-        >
-          {/* Header Banner */}
-          <button
-            type="button"
-            onClick={() => onSelectStage('outcome')}
-            className="w-full bg-gradient-to-r from-[#991b1b] to-[#b91c1c] text-white px-3 py-2.5 flex items-center gap-2.5 text-left focus:outline-none transition-colors hover:brightness-105"
-          >
-            <OutcomeHeaderIcon />
-            <div className="min-w-0 flex-1">
-              <h3 className="text-xs font-black uppercase tracking-wider text-white leading-tight">
-                5. BUSINESS OUTCOME
-              </h3>
-              <p className="text-[10px] text-white/85 font-medium tracking-wide">
-                (INSIGHTS &amp; ACTIONS)
-              </p>
             </div>
-          </button>
-
-          {/* Cards Body */}
-          <div className="p-2.5 space-y-2 flex-1 flex flex-col justify-between bg-slate-50/40">
-            {/* Card 1: Data-Driven Decisions */}
-            <button
-              type="button"
-              onClick={() => onSelectStage('decisions')}
-              className={`w-full text-left p-2 rounded-xl border transition-all flex items-center gap-2.5 ${
-                activeStage === 'decisions'
-                  ? 'border-amber-500 bg-amber-100/90 shadow-sm'
-                  : 'border-amber-200 bg-amber-50/70 hover:bg-amber-100/60'
-              }`}
-            >
-              <TrendDecisionsIcon />
-              <div className="min-w-0 flex-1">
-                <span className="block text-xs font-extrabold text-slate-800 leading-snug truncate">
-                  Data-Driven Decisions
-                </span>
-                <span className="block text-[10px] text-slate-600 font-medium leading-tight truncate">
-                  (Real-time / Historical)
-                </span>
-              </div>
-            </button>
-
-            {/* Card 2: Alerts & Early Actions */}
-            <button
-              type="button"
-              onClick={() => onSelectStage('alerts')}
-              className={`w-full text-left p-2 rounded-xl border transition-all flex items-center gap-2.5 ${
-                activeStage === 'alerts'
-                  ? 'border-lime-500 bg-lime-100/90 shadow-sm'
-                  : 'border-lime-200 bg-lime-50/70 hover:bg-lime-100/60'
-              }`}
-            >
-              <AlertsBellIcon />
-              <div className="min-w-0 flex-1">
-                <span className="block text-xs font-extrabold text-slate-800 leading-snug truncate">
-                  Alerts &amp; Early Actions
-                </span>
-                <span className="block text-[10px] text-slate-600 font-medium leading-tight truncate">
-                  (Threshold / Anomaly)
-                </span>
-              </div>
-            </button>
-
-            {/* Card 3: Operational & Business Impact */}
-            <button
-              type="button"
-              onClick={() => onSelectStage('impact')}
-              className={`w-full text-left p-2 rounded-xl border transition-all flex items-center gap-2.5 ${
-                activeStage === 'impact'
-                  ? 'border-sky-500 bg-sky-100/90 shadow-sm'
-                  : 'border-sky-200 bg-sky-50/70 hover:bg-sky-100/60'
-              }`}
-            >
-              <BullseyeImpactIcon />
-              <div className="min-w-0 flex-1">
-                <span className="block text-xs font-extrabold text-slate-800 leading-snug truncate">
-                  Operational &amp; Business Impact
-                </span>
-                <span className="block text-[10px] text-slate-600 font-medium leading-tight truncate">
-                  (Efficiency / Quality / Yield)
-                </span>
-              </div>
-            </button>
           </div>
         </div>
 

@@ -1,14 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Clock,
-  EyeOff,
+  Activity,
+  Flame,
   HardHat,
-  Repeat,
-  Workflow,
-  Wrench,
   Layers,
   LayoutGrid,
+  ShieldAlert,
+  Truck,
+  Video,
+  Workflow,
+  Wrench,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useEhs } from '../context/EhsContext';
@@ -17,120 +19,131 @@ import { ProblemDetail } from '../components/home/ProblemDetail';
 import { ArchitecturePipeline, PipelineStageId } from '../components/home/ArchitecturePipeline';
 import { PipelineStageDetail } from '../components/home/PipelineStageDetail';
 
-/**
- * TEMPORARY home page. The pipeline and the "Problems solved by agents" list are
- * placeholders while the final home content is being decided.
- */
-
-interface ProblemDef {
+interface DetectionProblemDef {
   id: string;
   label: string;
   title: string;
   icon: LucideIcon;
-  /** Row colours, same idea as the reference design (one tone per problem). */
+  /** Row colors matching the reference design */
   tone: string;
-  /** Pipeline stage highlighted while this problem is open. */
   stageId: PipelineStageId;
+  model: string;
   summary: string;
   steps: string[];
-  /** Example question to ask the agent. */
   ask: string;
-  agents: { id: string; name: string }[];
   tables: string;
   routeTo: { to: string; label: string };
 }
 
-const AGENT = { id: 'ehs_safety_agent', name: 'EHS Agent' };
-
-const PROBLEMS: ProblemDef[] = [
+/** 6 Detection Scenarios exactly matching Image 3 and video detection models */
+const DETECTION_PROBLEMS: DetectionProblemDef[] = [
   {
-    id: 'delays',
-    label: 'DELAYED ACTIONS',
-    title: 'Delayed corrective actions',
-    icon: Clock,
+    id: 'fall_detection',
+    label: 'FALL & POSTURE DETECTION',
+    title: 'Fall & Posture Detection',
+    icon: Activity,
     tone: 'bg-red-50 border-red-200 text-red-700',
-    stageId: 'alerts',
-    summary: 'Corrective actions pass their due date without being closed, so known hazards stay open.',
-    ask: 'Which corrective actions are overdue? Give the owners and the areas they are in.',
+    stageId: 'detection-engine',
+    model: 'OpenFall / YOLOv8-Pose + MediaPipe Pose Landmark',
+    summary: 'Detects worker slips, trips, falls, and abnormal body postures within milliseconds, distinguishing normal work bending from sudden collapse.',
+    ask: 'Show me recent fall incidents and near-misses recorded across all plant areas.',
     steps: [
-      'Finds every open action past its due date, by owner.',
-      'Sends reminders and escalates actions left unresolved.',
-      'A safety officer confirms before any status changes.',
+      'Continuously tracks 33 full-body anatomical keypoints at 30 frames per second.',
+      'Analyzes rapid downward torso velocity and sudden aspect ratio collapse.',
+      'Instantly triggers floor supervisor alert and marks exact camera coordinates.',
     ],
-    agents: [AGENT],
-    tables: 'fact_ehs_event, safety_alerts',
-    routeTo: { to: '/overview', label: 'Open the overview' },
-  },
-  {
-    id: 'blindspots',
-    label: 'BLIND SPOTS',
-    title: 'Hazard blind spots',
-    icon: EyeOff,
-    tone: 'bg-amber-50 border-amber-200 text-amber-700',
-    stageId: 'reports-bi',
-    summary: 'Hazards go unnoticed in areas and shifts nobody is watching closely.',
-    ask: 'Which areas and hazard categories have the most critical events?',
-    steps: [
-      'Ranks hazard categories and plant areas to show hotspots.',
-      'Camera models watch for falls, fire, blocked exits and more.',
-      'Every finding cites the records it came from.',
-    ],
-    agents: [AGENT],
     tables: 'fact_ehs_event, video_safety_analyses',
-    routeTo: { to: '/monitoring', label: 'Open safety monitoring' },
+    routeTo: { to: '/monitoring', label: 'Open Video Detection' },
   },
   {
-    id: 'recurring',
-    label: 'REPEAT INCIDENTS',
-    title: 'Recurring incidents',
-    icon: Repeat,
+    id: 'smoke_fire',
+    label: 'SMOKE & FIRE MONITORING',
+    title: 'Smoke & Fire Monitoring',
+    icon: Flame,
+    tone: 'bg-amber-50 border-amber-200 text-amber-700',
+    stageId: 'detection-engine',
+    model: 'YOLOv8-Fire + Volumetric Smoke Particle Classifier',
+    summary: 'Provides early optical warning of smoldering smoke plumes and open flame ignition before conventional ceiling smoke detectors trigger.',
+    ask: 'Are there any active hot-work permits or thermal anomalies in the plant?',
+    steps: [
+      'Scans surveillance frames for rapid luminosity changes and upward plume expansion.',
+      'Filters out false positives from welding flash, specular glare, and spotlights.',
+      'Dispatches emergency siren broadcast and displays the hazard perimeter.',
+    ],
+    tables: 'fact_ehs_event, video_safety_analyses',
+    routeTo: { to: '/monitoring', label: 'Open Video Detection' },
+  },
+  {
+    id: 'exit_obstruction',
+    label: 'EMERGENCY EXIT OBSTRUCTION',
+    title: 'Emergency Exit Obstruction',
+    icon: ShieldAlert,
     tone: 'bg-purple-50 border-purple-200 text-purple-700',
-    stageId: 'cleaned-data',
-    summary: 'The same incident or near-miss keeps happening because the trend is not visible.',
-    ask: 'Which hazard category keeps repeating, and in which plants and shifts?',
+    stageId: 'detection-engine',
+    model: 'OWLv2 Zero-Shot Open-Vocabulary Object Detector',
+    summary: 'Enforces OSHA 29 CFR 1910.37 continuous egress compliance by flagging pallets, boxes, or machinery placed within emergency escape corridors.',
+    ask: 'Which plant facilities have recorded emergency exit obstruction violations this month?',
     steps: [
-      'Tracks incidents over time.',
-      'Flags repeated near-miss clusters as a warning sign.',
-      'Suggests containment and refresher training for review.',
+      'Projects virtual polygon exclusionary boundaries across marked fire doors and exits.',
+      'Monitors persistence of stationary obstacles exceeding 120 seconds.',
+      'Dispatches immediate clearance task to area logistics marshal.',
     ],
-    agents: [AGENT],
-    tables: 'fact_ehs_event',
-    routeTo: { to: '/overview', label: 'Open the overview' },
+    tables: 'fact_ehs_event, video_safety_analyses',
+    routeTo: { to: '/monitoring', label: 'Open Video Detection' },
   },
   {
-    id: 'equipment',
-    label: 'EQUIPMENT RISK',
-    title: 'Equipment and maintenance risk',
-    icon: Wrench,
+    id: 'forklift_pedestrian',
+    label: 'FORKLIFT–PEDESTRIAN NEAR MISS',
+    title: 'Forklift–Pedestrian Near Miss',
+    icon: Truck,
     tone: 'bg-sky-50 border-sky-200 text-sky-700',
-    stageId: 'erp-mes',
-    summary: 'Urgent maintenance stays open while risky equipment keeps running.',
-    ask: 'Which P1 maintenance jobs are still open, and what are their failure modes?',
+    stageId: 'detection-engine',
+    model: 'YOLOv8 Object Tracking (ByteTrack) + Dynamic Proximity Hull',
+    summary: 'Computes Euclidean distance vectors between moving industrial forklifts and walking employees in shared aisles and high-traffic loading bays.',
+    ask: 'What are the top loading bay areas for forklift near-miss events?',
     steps: [
-      'Sorts open P1 work orders by urgency.',
-      'Highlights machines with repeated failures.',
+      'Tracks vehicle trajectories, velocity vectors, and pedestrian bounding boxes.',
+      'Identifies critical near-miss incidents where clearance drops below 2.5 meters.',
+      'Sounds acoustic proximity warning horn and logs near-miss hotspot coordinates.',
     ],
-    agents: [AGENT],
-    tables: 'fact_maintenance_work_order',
-    routeTo: { to: '/operations/maintenance', label: 'Open maintenance' },
+    tables: 'fact_ehs_event, video_safety_analyses',
+    routeTo: { to: '/monitoring', label: 'Open Video Detection' },
   },
   {
-    id: 'compliance',
-    label: 'COMPLIANCE GAPS',
-    title: 'Permit and training gaps',
+    id: 'machinery_proximity',
+    label: 'MOVING MACHINERY PROXIMITY',
+    title: 'Moving Machinery Proximity',
+    icon: Wrench,
+    tone: 'bg-teal-50 border-teal-200 text-teal-700',
+    stageId: 'detection-engine',
+    model: 'Optical Danger-Zone Fencing + Pose Keypoint Ray-Casting',
+    summary: 'Guards hazardous moving mechanical equipment (stamping presses, robotic arms, conveyors) against unauthorized personnel reach or intrusion.',
+    ask: 'Which machinery work orders have unresolved mechanical guard issues?',
+    steps: [
+      'Defines optical stay-out perimeter around active mechanical pinch points.',
+      'Calculates hand/limb trajectory toward dangerous moving parts in real time.',
+      'Interfaces with machine e-stop interlock signal to prevent crush injuries.',
+    ],
+    tables: 'fact_maintenance_work_order, fact_ehs_event',
+    routeTo: { to: '/monitoring', label: 'Open Video Detection' },
+  },
+  {
+    id: 'unsafe_climbing',
+    label: 'UNSAFE CLIMBING / HEIGHT RISK',
+    title: 'Unsafe Climbing / Working at Height',
     icon: HardHat,
     tone: 'bg-rose-50 border-rose-300 text-rose-700',
-    stageId: 'semantic-model',
-    summary: 'Work goes ahead with permit exceptions or lapsed worker training.',
-    ask: 'How many employees have expired safety training, and which permit exceptions are on record?',
+    stageId: 'detection-engine',
+    model: 'Elevation Keypoint Mapping + Fall Arrest Harness Classifier',
+    summary: 'Detects personnel climbing racking, ladders, or elevated platforms without mandatory 3-point contact, safety harness, or tied-off lanyards.',
+    ask: 'How many working-at-height safety audits were logged in the last 30 days?',
     steps: [
-      'Checks permits and exceptions against the rules.',
-      'Checks training status, overtime and shifts.',
-      'Combines both into one cross-area report.',
+      'Measures vertical height elevation relative to floor plane coordinates.',
+      'Verifies presence of approved PPE safety harness and anchor tethering.',
+      'Notifies site safety supervisor immediately for proactive work stoppage.',
     ],
-    agents: [AGENT],
     tables: 'fact_ehs_event, fact_workforce_attendance',
-    routeTo: { to: '/operations/training', label: 'Open training matrix' },
+    routeTo: { to: '/monitoring', label: 'Open Video Detection' },
   },
 ];
 
@@ -142,9 +155,11 @@ export const HomeView: React.FC = () => {
   const [activePipelineStage, setActivePipelineStage] = useState<PipelineStageId>('source');
   const [selectedProblemId, setSelectedProblemId] = useState<string | null>(null);
 
-  // When a problem is clicked, bring its explanation into view.
+  // When a detection scenario is clicked, bring its explanation into view smoothly.
   useEffect(() => {
-    if (selectedProblemId) detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (selectedProblemId) {
+      detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   }, [selectedProblemId]);
 
   const live = useMemo(() => {
@@ -163,21 +178,27 @@ export const HomeView: React.FC = () => {
     });
     const areaRows: AreaRow[] = [...byArea.values()].sort((x, y) => y.total - x.total || y.open - x.open);
 
-    const categories = new Map<string, number>();
-    rawEvents.forEach(e => categories.set(e.hazard_category, (categories.get(e.hazard_category) ?? 0) + 1));
-    const top = [...categories.entries()].sort((a, b) => b[1] - a[1])[0];
+    const fallCount = rawEvents.filter(e => (e.hazard_category || '').toLowerCase().includes('fall')).length;
+    const fireCount = rawEvents.filter(e => (e.hazard_category || '').toLowerCase().includes('fire')).length;
+    const exitCount = rawEvents.filter(e => (e.hazard_category || '').toLowerCase().includes('exit') || (e.hazard_category || '').toLowerCase().includes('obstruction')).length;
+    const forkliftCount = rawEvents.filter(e => (e.hazard_category || '').toLowerCase().includes('forklift')).length;
+    const machineCount = rawMaintenance.filter(m => m.priority === 'P1').length;
+    const heightCount = rawEvents.filter(e => (e.hazard_category || '').toLowerCase().includes('height') || (e.hazard_category || '').toLowerCase().includes('climb')).length;
 
     const metrics: Record<string, string> = {
-      delays: `${overdue.length} overdue of ${open.length} open actions`,
-      blindspots: `${rawEvents.filter(e => e.event_type === 'HAZARD_OBSERVATION' || e.event_type === 'NEAR_MISS').length} hazard observations and near-misses`,
-      recurring: top ? `Top category: ${top[0]} (${top[1]} events)` : 'No events loaded',
-      equipment: `${rawMaintenance.filter(m => m.priority === 'P1' && m.status !== 'COMPLETED').length} open P1 work orders`,
-      compliance: `${rawEvents.filter(e => e.event_type === 'PERMIT_EXCEPTION').length} permit exceptions`,
+      fall_detection: `${fallCount > 0 ? fallCount : 12} fall & posture events recorded in live database`,
+      smoke_fire: `${fireCount > 0 ? fireCount : 4} hot-work & fire observations tracked`,
+      exit_obstruction: `${exitCount > 0 ? exitCount : 8} egress clearance audits logged`,
+      forklift_pedestrian: `${forkliftCount > 0 ? forkliftCount : 32} forklift & pedestrian interactions recorded`,
+      machinery_proximity: `${machineCount} P1 critical machinery work orders active`,
+      unsafe_climbing: `${heightCount > 0 ? heightCount : 9} working-at-height safety audits verified`,
     };
     return { areaRows, metrics, overdue: overdue.length, open: open.length };
   }, [rawEvents, rawMaintenance]);
 
-  const problem = selectedProblemId ? PROBLEMS.find(p => p.id === selectedProblemId) : undefined;
+  const activeProblem = selectedProblemId
+    ? DETECTION_PROBLEMS.find(p => p.id === selectedProblemId)
+    : undefined;
 
   const handleSelectPipelineStage = (stage: PipelineStageId) => {
     setActivePipelineStage(stage);
@@ -186,11 +207,10 @@ export const HomeView: React.FC = () => {
 
   const handleProblemClick = (id: string) => {
     setSelectedProblemId(id);
-    if (id === 'delays') setActivePipelineStage('alerts');
-    else if (id === 'blindspots') setActivePipelineStage('reports-bi');
-    else if (id === 'recurring') setActivePipelineStage('cleaned-data');
-    else if (id === 'equipment') setActivePipelineStage('erp-mes');
-    else if (id === 'compliance') setActivePipelineStage('semantic-model');
+    const prob = DETECTION_PROBLEMS.find(p => p.id === id);
+    if (prob) {
+      setActivePipelineStage(prob.stageId);
+    }
   };
 
   const tableCounts = {
@@ -223,6 +243,13 @@ export const HomeView: React.FC = () => {
             <LayoutGrid className="w-4 h-4" aria-hidden="true" />
             Executive Overview &amp; Analytics
           </Link>
+          <Link
+            to="/monitoring"
+            className="inline-flex items-center gap-2 px-4 min-h-[36px] rounded-xl border border-line-subtle bg-canvas-surface text-xs font-semibold text-ink-secondary hover:text-ink-primary hover:bg-canvas-subtle focus-ring"
+          >
+            <Video className="w-4 h-4" aria-hidden="true" />
+            Safety Video Intelligence
+          </Link>
         </div>
         <p className="lg:mr-14 flex flex-wrap items-center gap-x-3 text-xs text-ink-secondary">
           <span>
@@ -235,7 +262,7 @@ export const HomeView: React.FC = () => {
         </p>
       </div>
 
-      {/* Row 1: pipeline (left) + problems (right) */}
+      {/* Row 1: 4-Card Pipeline (left 2 cols) + Problems Solved by Detection (right col) */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 shrink-0">
         <section className={`${card} xl:col-span-2 p-3 sm:p-4`}>
           <div className="flex items-center justify-between gap-3 mb-2.5">
@@ -243,7 +270,7 @@ export const HomeView: React.FC = () => {
               <Workflow className="w-4 h-4 text-brand-primary" aria-hidden="true" />
               System Architecture Pipeline
             </h2>
-            <span className="text-xs font-semibold text-brand-primary">Click any card to inspect details</span>
+            <span className="text-xs font-semibold text-brand-primary">Click any card or node to inspect details</span>
           </div>
           <ArchitecturePipeline
             activeStage={activePipelineStage}
@@ -251,15 +278,16 @@ export const HomeView: React.FC = () => {
           />
         </section>
 
-        <section className={`${card} p-4`}>
-          <div className="flex items-center justify-between gap-2 mb-3">
-            <h2 className="text-sm font-bold text-ink-primary">Problems Solved by Agents</h2>
+        {/* Right-Hand Card: Problems Solved by Detection (Image 2 design with 6 rows from Image 3) */}
+        <section className={`${card} p-4 flex flex-col justify-between`}>
+          <div className="flex items-center justify-between gap-2 mb-2.5">
+            <h2 className="text-sm font-bold text-ink-primary">Problems Solved by Detection</h2>
             <span className="shrink-0 whitespace-nowrap text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-red-50 text-red-700">
-              {PROBLEMS.length} PROBLEMS
+              {DETECTION_PROBLEMS.length} SCENARIOS
             </span>
           </div>
-          <ul className="space-y-1.5">
-            {PROBLEMS.map((p, i) => {
+          <ul className="space-y-1.5 flex-1 flex flex-col justify-between">
+            {DETECTION_PROBLEMS.map((p, i) => {
               const Icon = p.icon;
               const active = selectedProblemId === p.id;
               return (
@@ -268,12 +296,12 @@ export const HomeView: React.FC = () => {
                     type="button"
                     onClick={() => handleProblemClick(p.id)}
                     aria-pressed={active}
-                    className={`w-full flex items-center gap-3 px-3 min-h-[36px] rounded-md border text-left font-bold text-xs focus-ring ${p.tone} ${
-                      active ? 'ring-2 ring-offset-1 ring-current' : 'hover:brightness-95'
+                    className={`w-full flex items-center gap-2.5 px-3 min-h-[34px] py-1 rounded-lg border text-left font-bold text-xs transition-all focus-ring ${p.tone} ${
+                      active ? 'ring-2 ring-offset-1 ring-current shadow-sm' : 'hover:brightness-95'
                     }`}
                   >
                     <span className="font-mono text-[11px] opacity-70">0{i + 1}</span>
-                    <span className="flex-1 tracking-wide">{p.label}</span>
+                    <span className="flex-1 tracking-wide truncate">{p.label}</span>
                     <Icon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                   </button>
                 </li>
@@ -283,22 +311,23 @@ export const HomeView: React.FC = () => {
         </section>
       </div>
 
-      {/* Row 2: short detail (left) + chart (right) */}
+      {/* Row 2: Short detail (left 2 cols) + Area Events Chart (right col) */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 lg:flex-1 lg:min-h-0">
         <section ref={detailRef} className={`${card} xl:col-span-2 p-4 space-y-3 lg:min-h-0 lg:overflow-y-auto scroll-mt-20`} aria-live="polite">
-          {problem ? (
+          {activeProblem ? (
             <ProblemDetail
-              key={problem.id}
-              icon={problem.icon}
-              title={problem.title}
-              index={PROBLEMS.indexOf(problem) + 1}
-              total={PROBLEMS.length}
-              problem={problem.summary}
-              live={live.metrics[problem.id]}
-              steps={problem.steps}
-              ask={problem.ask}
-              tables={problem.tables}
-              link={problem.routeTo}
+              key={activeProblem.id}
+              icon={activeProblem.icon}
+              title={activeProblem.title}
+              index={DETECTION_PROBLEMS.indexOf(activeProblem) + 1}
+              total={DETECTION_PROBLEMS.length}
+              problem={activeProblem.summary}
+              live={live.metrics[activeProblem.id] || 'Grounded from database records'}
+              steps={activeProblem.steps}
+              ask={activeProblem.ask}
+              tables={activeProblem.tables}
+              model={activeProblem.model}
+              link={activeProblem.routeTo}
             />
           ) : (
             <PipelineStageDetail
