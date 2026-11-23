@@ -89,10 +89,41 @@ RELATIONSHIPS = (
     "period - never claim that a maintenance job belongs to a specific event."
 )
 
+STATIC_ALLOWED_VALUES = {
+    "fact_ehs_event": {
+        "plant_id": ["IN-KA-01", "IN-TN-01"],
+        "area": ["FINAL_ASSEMBLY", "LOGISTICS", "PACKAGING", "SMT", "TEST", "UTILITIES", "WAREHOUSE"],
+        "shift_id": ["A", "B", "C"],
+        "event_type": ["FIRST_AID", "HAZARD_OBSERVATION", "NEAR_MISS", "PERMIT_EXCEPTION", "SAFETY_AUDIT"],
+        "hazard_category": ["CHEMICAL_SPILL", "ELECTRICAL", "ERGONOMIC", "FIRE_SAFETY", "FORKLIFT", "FALL_HAZARD", "MACHINE_GUARDING", "PPE_NON_COMPLIANCE"],
+        "risk_severity": ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+        "lost_time_injury": [False, True],
+        "action_status": ["OPEN", "IN_PROGRESS", "CLOSED"],
+    },
+    "fact_workforce_attendance": {
+        "plant_id": ["IN-KA-01", "IN-TN-01"],
+        "shift_id": ["A", "B", "C"],
+        "attendance_status": ["PRESENT", "ABSENT", "LEAVE", "LATE"],
+        "skill_match": ["MATCHED", "GAP"],
+        "training_compliance": ["CURRENT", "EXPIRED"],
+    },
+    "fact_maintenance_work_order": {
+        "plant_id": ["IN-KA-01", "IN-TN-01"],
+        "maintenance_type": ["PREVENTIVE", "CORRECTIVE", "PREDICTIVE"],
+        "failure_mode": ["BEARING_WEAR", "CALIBRATION_ERROR", "ELECTRICAL_FAULT", "HYDRAULIC_LEAK", "OVERHEATING", "SENSOR_DRIFT"],
+        "priority": ["P1", "P2", "P3"],
+        "status": ["PLANNED", "IN_PROGRESS", "COMPLETED"],
+    },
+}
+
 
 def schema_overview() -> str:
-    """Compact table + column listing for the agent instructions."""
+    """Compact table + column listing and allowed values for the agent instructions."""
     lines = []
     for doc in TABLES.values():
-        lines.append(f"- {SCHEMA}.{doc.name} ({doc.description})\n    columns: {', '.join(doc.columns)}")
+        val_str = ""
+        if doc.name in STATIC_ALLOWED_VALUES:
+            val_items = [f"{col}: [{', '.join(str(v) for v in vals)}]" for col, vals in STATIC_ALLOWED_VALUES[doc.name].items()]
+            val_str = f"\n    allowed_values: {'; '.join(val_items)}"
+        lines.append(f"- {SCHEMA}.{doc.name} ({doc.description})\n    columns: {', '.join(doc.columns)}{val_str}")
     return "\n".join(lines)

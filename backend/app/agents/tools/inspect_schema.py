@@ -9,10 +9,16 @@ from app.agents.tools.catalog import RELATIONSHIPS, SCHEMA, TABLES
 from app.agents.tools.run_query import run_query
 from app.agents.tools.sql_guard import QueryRejected
 
+_SCHEMA_CACHE: Dict[str, Dict[str, Any]] = {}
+
 
 def inspect_schema(db: Session, table: str, plant_id: Optional[str] = None) -> Dict[str, Any]:
-    """Tool 1: columns, meanings and allowed values for one table."""
+    """Tool 1: columns, meanings and allowed values for one table (cached in memory)."""
     key = (table or "").strip().lower().removeprefix(f"{SCHEMA}.")
+    cache_key = f"{key}:{plant_id or 'ALL'}"
+    if cache_key in _SCHEMA_CACHE:
+        return _SCHEMA_CACHE[cache_key]
+
     doc = TABLES.get(key)
     if doc is None:
         raise QueryRejected(f"Unknown table '{table}'. Available tables: {', '.join(TABLES)}.")
@@ -33,4 +39,6 @@ def inspect_schema(db: Session, table: str, plant_id: Optional[str] = None) -> D
         if not distinct["truncated"]:  # only low-cardinality columns are listed
             values[col] = [r[0] for r in distinct["rows"]]
     info["allowed_values"] = values
+
+    _SCHEMA_CACHE[cache_key] = info
     return info

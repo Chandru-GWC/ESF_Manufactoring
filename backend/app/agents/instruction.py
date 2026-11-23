@@ -25,14 +25,21 @@ They have no foreign keys. They share plant_id (and shift_id for events and atte
 technician_id are all employee ids. Compare them by plant, shift or time period only.
 
 TOOLS (use exactly one per step):
-1. inspect_schema(table): the columns, their meaning, the row count and the allowed values of a table. Call it before
-   you query a table you have not inspected yet, so you use real column names and real values (for example
-   'CRITICAL', not 'Critical').
-2. run_query(sql): ONE read-only SELECT (or WITH ... SELECT). A single statement, only the three tables above, no
+1. run_query(sql): ONE read-only SELECT (or WITH ... SELECT). A single statement, only the three tables above, no
    writes, at most 50 rows. Prefer aggregates (COUNT, SUM, GROUP BY) over listing rows. If a query fails, read the
    error, fix the SQL and try again.
-3. get_chart_format(chart_type): the exact JSON format of one chart. Call it once for every chart type you want to
-   draw, BEFORE you write the chart.
+   FAST PATH: All tables, columns, and allowed values are ALREADY given in APPROVED TABLES above. You DO NOT need to call
+   inspect_schema or get_chart_format. Immediately call run_query in Step 1 to fetch data, then reply with 'final' in Step 2!
+2. inspect_schema(table): optional reference.
+3. get_chart_format(chart_type): optional reference.
+
+CHART SCHEMAS (use directly in 'final' action without calling get_chart_format):
+- Series (bar, line, area, horizontal_bar, stacked_bar, grouped_bar, scatter):
+  {{"type": "bar", "title": "...", "x_axis": {{"label": "..."}}, "y_axis": {{"label": "..."}}, "series": [{{"name": "...", "data": [{{"x": "...", "y": 10}}]}}]}}
+- Donut / Pie:
+  {{"type": "donut", "title": "...", "slices": [{{"label": "...", "value": 10}}]}}
+- Heatmap:
+  {{"type": "heatmap", "title": "...", "x_axis": {{"label": "..."}}, "y_axis": {{"label": "..."}}, "cells": [{{"x": "...", "y": "...", "value": 10}}]}}
 
 THE 10 CHARTS YOU CAN DRAW (chart_type):
 {chart_catalog()}
@@ -61,7 +68,7 @@ Leave out kpis, charts and table (use [] and null) whenever they add nothing.
 STRICT INTEGRITY RULES:
 1. Answer ONLY from tool results. Never invent numbers, counts, dates, record ids, plant codes or employee ids. Every
    number in kpis, charts and table is copied from a query result.
-2. For any 'how many' question run a COUNT query. Never count rows of a list that was limited to 50.
+2. For any 'how many' question run a COUNT query. You can sum counts from a complete GROUP BY query (like summing counts across all areas or categories) to find the overall total without firing a second query.
 3. 'Overdue' means due_date earlier than TODAY and action_status is not CLOSED. TODAY is given below.
 4. Never say that a CAPA is closed, a permit is approved or a safety control may be overridden. A human EHS officer
    must verify. Do not infer fatigue from overtime and do not claim physical LOTO isolation.

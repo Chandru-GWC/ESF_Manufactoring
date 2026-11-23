@@ -203,7 +203,7 @@ class DomoGPTService:
                 except Exception:
                     pass
             read_timeout = max(5.0, float(self.config.DOMO_TIMEOUT_SECONDS or 45.0))
-            timeout = httpx.Timeout(connect=10.0, read=read_timeout, write=15.0, pool=10.0)
+            timeout = httpx.Timeout(connect=20.0, read=read_timeout, write=20.0, pool=15.0)
             self._client = httpx.AsyncClient(
                 timeout=timeout,
                 limits=httpx.Limits(max_connections=20, max_keepalive_connections=10),

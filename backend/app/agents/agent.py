@@ -30,7 +30,7 @@ from app.schemas.ai_agent import (
 from app.services.domogpt_service import DomoGPTService, domogpt_service
 
 MAX_STEPS = 8  # tool calls + the final answer
-MAX_TOKENS = 2800  # the final answer can carry KPIs, charts and a table
+MAX_TOKENS = 2400  # the final answer can carry KPIs, charts and a table
 RESULT_CHARS = 3500  # how much of one tool result is shown back to the model
 
 _PK_TO_TABLE = {doc.primary_key: doc.name for doc in TABLES.values()}
@@ -127,7 +127,8 @@ class EhsSafetyAgent:
                 transcript="\n".join(transcript),
                 steps_left=MAX_STEPS - 1 - step,
             )
-            llm_res = await self.llm.generate_text(prompt, temperature=0.1, max_tokens=MAX_TOKENS)
+            step_tokens = 800 if step < 2 else MAX_TOKENS
+            llm_res = await self.llm.generate_text(prompt, temperature=0.1, max_tokens=step_tokens)
             model_id, session_id = llm_res.model_id, llm_res.session_id or session_id
             usages.append(llm_res.token_usage)
 
