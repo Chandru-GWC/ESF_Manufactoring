@@ -251,15 +251,6 @@ export const HomeView: React.FC = () => {
             Safety Video Intelligence
           </Link>
         </div>
-        <p className="lg:mr-14 flex flex-wrap items-center gap-x-3 text-xs text-ink-secondary">
-          <span>
-            Database Grounding: <strong className="text-brand-primary">Neon PostgreSQL (ehs_core)</strong>
-          </span>
-          <span className="flex items-center gap-1.5 font-bold text-green-600">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500" aria-hidden="true" />
-            Zero Mock Data
-          </span>
-        </p>
       </div>
 
       {/* Row 1: 4-Card Pipeline (left 2 cols) + Problems Solved by Detection (right col) */}
