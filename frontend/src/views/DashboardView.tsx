@@ -40,6 +40,8 @@ export const DashboardView: React.FC<{ kind: DashboardKind }> = ({ kind }) => {
   const key = `${kind}:${facilityId}`;
   const initialData = useMemo(() => getInitialDashboard(key), [key]);
   const [data, setData] = useState<DashboardData | null>(initialData);
+  const dataRef = useRef(data);
+  dataRef.current = data;
   const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
   const requestId = useRef(0);
@@ -80,7 +82,7 @@ export const DashboardView: React.FC<{ kind: DashboardKind }> = ({ kind }) => {
         return;
       }
       const id = ++requestId.current;
-      if (!data) setLoading(true);
+      if (!dataRef.current) setLoading(true);
       setError(null);
       try {
         const fresh = await ehsApi.getDashboard(kind, facilityId);
@@ -97,7 +99,7 @@ export const DashboardView: React.FC<{ kind: DashboardKind }> = ({ kind }) => {
         if (id === requestId.current) setLoading(false);
       }
     },
-    [key, kind, facilityId, data]
+    [key, kind, facilityId]
   );
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   EhsEventRecord,
@@ -179,6 +179,9 @@ export const EhsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(initialSummaries?.lastSyncedAt || null);
 
   const [overviewSummary, setOverviewSummary] = useState<OperationsOverviewSummary | null>(initialSummaries?.overview || null);
+  const overviewSummaryRef = useRef<OperationsOverviewSummary | null>(initialSummaries?.overview || null);
+  overviewSummaryRef.current = overviewSummary;
+  const inFlightRef = useRef(false);
   const [eventSummary, setEventSummary] = useState<EventAggregationSummary | null>(initialSummaries?.event || null);
   const [workforceSummary, setWorkforceSummary] = useState<WorkforceSummary | null>(initialSummaries?.workforce || null);
   const [maintenanceSummary, setMaintenanceSummary] = useState<MaintenanceSummary | null>(initialSummaries?.maintenance || null);
@@ -229,8 +232,11 @@ export const EhsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const loadData = useCallback(async () => {
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
+
     // Only show full-screen skeleton if we don't have summaries already displayed
-    if (!overviewSummary) {
+    if (!overviewSummaryRef.current) {
       setIsLoading(true);
     }
     setError(null);
@@ -330,8 +336,9 @@ export const EhsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }));
     } finally {
       setIsLoading(false);
+      inFlightRef.current = false;
     }
-  }, [facilityId, overviewSummary]);
+  }, [facilityId]);
 
   // Loading all datasets costs network requests. Preload on overview/operations/monitoring pages
   const { pathname } = useLocation();
