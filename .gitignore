@@ -24,9 +24,9 @@ scratch/
 # Nested third-party repo (own .git, venv, demo videos) - not part of this repo
 backend/vendor/OpenFall/
 
-# Large model weights and generated/runtime media (reproducible or too large for git)
+# Large model weights and temporary uploads (reproducible or too large for git)
 backend/models_cache/
-backend/storage/
+backend/storage/tmp_uploads/
 *.pt
 *.onnx
 

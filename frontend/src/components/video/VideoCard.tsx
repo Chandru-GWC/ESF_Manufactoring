@@ -7,6 +7,8 @@ interface VideoCardProps {
   scenario: string;
   /** Video shown as the card preview (first frame). */
   src: string | null;
+  /** Poster / evidence frame thumbnail image if video is not yet loaded or missing. */
+  poster?: string | null;
   /** Latest analysis of this video, if any. */
   analysis: VideoAnalysisResult | null;
   actionLabel: string;
@@ -36,7 +38,7 @@ function describe(a: VideoAnalysisResult | null): { label: string; tone: Tone } 
 }
 
 /** One video as a card: preview, scenario, analysis status and one action. */
-export const VideoCard: React.FC<VideoCardProps> = ({ title, scenario, src, analysis, actionLabel, actionDisabled, actionHint, onOpen }) => {
+export const VideoCard: React.FC<VideoCardProps> = ({ title, scenario, src, poster, analysis, actionLabel, actionDisabled, actionHint, onOpen }) => {
   const status = describe(analysis);
   // Only start downloading the preview when the card is (almost) on screen: 20 videos at once would block the page.
   const frameRef = useRef<HTMLDivElement | null>(null);
@@ -65,8 +67,22 @@ export const VideoCard: React.FC<VideoCardProps> = ({ title, scenario, src, anal
     <article className="flex flex-col rounded-xl bg-canvas-surface border border-line-subtle shadow-sm-subtle overflow-hidden">
       <div ref={frameRef} className="relative aspect-video overflow-hidden bg-slate-900">
         {src && visible ? (
-          <video src={src} muted playsInline preload="metadata" className="absolute inset-0 w-full h-full object-cover" aria-label={`${title} preview`} />
-        ) : !src ? (
+          <video
+            src={src}
+            poster={poster || undefined}
+            muted
+            playsInline
+            preload="metadata"
+            className="absolute inset-0 w-full h-full object-cover"
+            aria-label={`${title} preview`}
+          />
+        ) : poster && visible ? (
+          <img
+            src={poster}
+            alt={`${title} preview`}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        ) : !src && !poster ? (
           <div className="absolute inset-0 flex items-center justify-center text-[11px] font-mono text-slate-400">No preview</div>
         ) : null}
         <span className={`absolute top-2 left-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold border ${TONES[status.tone]}`}>

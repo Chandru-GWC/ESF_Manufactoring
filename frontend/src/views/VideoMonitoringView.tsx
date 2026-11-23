@@ -341,12 +341,14 @@ export const VideoMonitoringView: React.FC = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     {uploadedVideos.map(row => {
                       const preview = row.annotated_video_url || row.original_video_url;
+                      const poster = row.evidence_frame_url ? mediaUrl(row.evidence_frame_url) : null;
                       return (
                         <VideoCard
                           key={row.analysis_id}
                           title={row.filename}
                           scenario={SCENARIO_COPY[row.use_case]?.title ?? row.use_case}
                           src={preview ? mediaUrl(`${preview}#t=0.4`) : null}
+                          poster={poster}
                           analysis={row}
                           actionLabel={row.status === 'PROCESSING' ? 'View progress' : 'View result'}
                           onOpen={() => setDetailRecord(row)}

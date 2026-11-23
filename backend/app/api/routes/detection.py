@@ -160,6 +160,9 @@ def _to_response(row: VideoSafetyAnalysis) -> VideoAnalysisResponse:
         original_url = f"/api/v1/detection/uploads/{os.path.basename(candidate)}"
         break
 
+    if original_url is None and row.video_id:
+        original_url = f"/api/v1/detection/library/{row.video_id}/stream"
+
     return VideoAnalysisResponse(
         analysis_id=row.analysis_id,
         use_case=row.use_case,  # type: ignore[arg-type]
