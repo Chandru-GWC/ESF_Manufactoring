@@ -160,7 +160,7 @@ def _extract_token_usage(payload: Dict[str, Any]) -> Optional[DomoTokenUsage]:
 class DomoGPTService:
     """
     Centralized async client for Domo Text Generation API.
-    Shared across the EHS Orchestrator and all specialist agents.
+    Shared by the EHS Safety Agent.
     """
 
     RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
@@ -425,6 +425,34 @@ class DomoGPTService:
                 message=exc.message,
             )
 
+    # ------------------------------------------------------------------
+    # Cached live health probe (connected == the upstream really answered)
+    # ------------------------------------------------------------------
+    HEALTH_TTL_OK_SECONDS = 120.0
+    HEALTH_TTL_FAIL_SECONDS = 30.0
 
-# Shared module-level singleton reused by FastAPI routes, orchestrator, and specialist agents
+    async def get_cached_connectivity(self, force: bool = False) -> DomoConnectivityResult:
+        """Return a real upstream probe result, cached for ~120s (30s after a failure).
+
+        Concurrent callers share one in-flight probe through a lock, so a burst of health
+        requests produces a single upstream call. `force=True` always probes fresh.
+        """
+        if not self.config.is_domo_configured:
+            return await self.check_connectivity()  # no upstream call; reports DOMO_CONFIG_ERROR
+
+        lock = self.__dict__.setdefault("_health_lock", asyncio.Lock())
+        async with lock:
+            cached = self.__dict__.get("_health_cache")
+            now = time.monotonic()
+            if not force and cached is not None:
+                result, stamp = cached
+                ttl = self.HEALTH_TTL_OK_SECONDS if result.connected else self.HEALTH_TTL_FAIL_SECONDS
+                if now - stamp < ttl:
+                    return result
+            result = await self.check_connectivity()
+            self.__dict__["_health_cache"] = (result, time.monotonic())
+            return result
+
+
+# Shared module-level singleton reused by FastAPI routes and the EHS Safety Agent
 domogpt_service = DomoGPTService()

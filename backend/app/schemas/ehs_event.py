@@ -30,13 +30,6 @@ class EhsEventFilter(BaseModel):
     risk_severity: Optional[str] = None
     action_status: Optional[str] = None
 
-class IngestionResult(BaseModel):
-    status: str
-    total_records: int
-    inserted: int
-    skipped_duplicates: int
-    errors: List[str] = []
-
 class EventAggregationSummary(BaseModel):
     total_events: int
     by_event_type: Dict[str, int]

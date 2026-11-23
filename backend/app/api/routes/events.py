@@ -2,13 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.core.database import get_db
-from app.core.config import settings
+from app.core.deps import plant_filter
 from app.repositories.ehs_event_repository import EhsEventRepository
-from app.services.ingestion_service import EhsIngestionService
 from app.schemas.ehs_event import (
     EhsEventResponse,
     EventAggregationSummary,
-    IngestionResult
 )
 
 router = APIRouter(prefix="/events", tags=["EHS Events"])
@@ -28,6 +26,7 @@ def get_events(
     """
     Retrieve paginated EHS event records with multi-dimensional filtering.
     """
+    plant_id = plant_filter(plant_id)
     repo = EhsEventRepository(db)
     return repo.list_events(
         plant_id=plant_id,
@@ -48,6 +47,7 @@ def get_event_summary(
     """
     Retrieve aggregated metrics and dimensional distributions derived from fact_ehs_event records.
     """
+    plant_id = plant_filter(plant_id)
     repo = EhsEventRepository(db)
     return repo.get_aggregations(plant_id=plant_id)
 
@@ -64,14 +64,3 @@ def get_event_by_id(
     if not event:
         raise HTTPException(status_code=404, detail=f"EHS Event '{event_id}' not found.")
     return event
-
-@router.post("/ingest/default-csv", response_model=IngestionResult)
-def trigger_default_ingestion(
-    db: Session = Depends(get_db)
-):
-    """
-    Trigger validated ingestion of the verified workspace fact_ehs_event.csv.
-    """
-    csv_path = settings.DEFAULT_CSV_PATH
-    return EhsIngestionService.ingest_events(db, csv_path)
-

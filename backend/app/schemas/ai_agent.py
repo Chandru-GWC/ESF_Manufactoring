@@ -4,7 +4,7 @@ EHS Safety AI Multi-Agent Architecture powered by DomoGPT and Neon PostgreSQL.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional, Union
 from pydantic import BaseModel, Field
 
 
@@ -52,12 +52,12 @@ class AIQueryRequest(BaseModel):
     )
     target_agent: Optional[str] = Field(
         None,
-        description="Optional explicit specialist agent key; if omitted, EHS Orchestrator selects automatically",
+        description="Ignored: the platform has a single agent (kept for API compatibility)",
     )
 
 
 class SpecialistAgentOutput(BaseModel):
-    """Internal normalized contract returned by every specialist agent."""
+    """Normalized agent result."""
 
     agent_key: str
     agent_name: str
@@ -77,6 +77,65 @@ class SpecialistAgentOutput(BaseModel):
     metrics_snapshot: Dict[str, Any] = {}
 
 
+ChartType = Literal[
+    "line", "area", "bar", "horizontal_bar", "stacked_bar", "grouped_bar", "pie", "donut", "heatmap", "scatter"
+]
+
+
+class KpiItem(BaseModel):
+    label: str
+    value: Union[str, int, float]
+    unit: Optional[str] = None
+    caption: Optional[str] = None
+    tone: Literal["neutral", "good", "warning", "critical"] = "neutral"
+
+
+class ChartAxis(BaseModel):
+    label: Optional[str] = None
+
+
+class ChartPoint(BaseModel):
+    x: Union[str, int, float]
+    y: float
+    label: Optional[str] = None
+
+
+class ChartSeries(BaseModel):
+    name: str
+    data: List[ChartPoint]
+
+
+class ChartSlice(BaseModel):
+    label: str
+    value: float
+
+
+class ChartCell(BaseModel):
+    x: str
+    y: str
+    value: float
+
+
+class ChartSpec(BaseModel):
+    """One chart the agent decided to show. Only the data field of its type is filled."""
+
+    type: ChartType
+    title: str
+    subtitle: Optional[str] = None
+    x_axis: Optional[ChartAxis] = None
+    y_axis: Optional[ChartAxis] = None
+    unit: Optional[str] = None
+    series: List[ChartSeries] = []  # line, area, bar, horizontal_bar, stacked_bar, grouped_bar, scatter
+    slices: List[ChartSlice] = []  # pie, donut
+    cells: List[ChartCell] = []  # heatmap
+
+
+class TableSpec(BaseModel):
+    title: Optional[str] = None
+    columns: List[str]
+    rows: List[List[Union[str, int, float, bool, None]]]
+
+
 class AIQueryResponse(BaseModel):
     """Structured API contract returned by POST /api/v1/ai/query."""
 
@@ -87,10 +146,15 @@ class AIQueryResponse(BaseModel):
     plant_scope: str = "ALL"
     routing_reason: str
     specialist_agents_invoked: List[str] = []
-    summary: str
-    key_findings: List[str]
+    # The answer: `content` always; kpis / charts / table only when the agent decided they are needed.
+    content: str = ""
+    kpis: List[KpiItem] = []
+    charts: List[ChartSpec] = []
+    table: Optional[TableSpec] = None
+    summary: str  # same text as `content` (kept for older clients)
+    key_findings: List[str] = []
     supporting_evidence: List[EvidenceItem]
-    recommendations: List[str]
+    recommendations: List[str] = []
     data_sources: List[str]
     limitations: List[str] = []
     human_review_required: bool = True

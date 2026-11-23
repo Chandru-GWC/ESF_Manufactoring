@@ -1,2 +1,3 @@
-"""EHS Safety AI Multi-Agent Package powered by DomoGPT and Neon PostgreSQL."""
+from app.agents.agent import EhsSafetyAgent, ehs_agent
 
+__all__ = ["EhsSafetyAgent", "ehs_agent"]

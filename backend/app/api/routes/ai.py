@@ -12,10 +12,10 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app.agents.orchestrator import ehs_orchestrator
-from app.agents.registry import list_all_agents_metadata
+from app.agents import ehs_agent
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.deps import ACTOR, plant_filter
 from app.schemas.ai_agent import AIQueryRequest, AIQueryResponse, AgentMetadata
 from app.services.domogpt_service import (
     DomoAuthenticationError,
@@ -31,33 +31,21 @@ from app.services.domogpt_service import (
 
 logger = logging.getLogger("ehs.ai.routes")
 
-router = APIRouter(prefix="/ai", tags=["EHS Multi-Agent AI & DomoGPT"])
+router = APIRouter(prefix="/ai", tags=["EHS Safety Agent & DomoGPT"])
 
 
 @router.get("/agents", response_model=List[AgentMetadata])
 def list_agents():
-    """Return registry metadata for the EHS Orchestrator and 7 logical specialist agents."""
-    return list_all_agents_metadata()
+    """Return metadata of the EHS Safety Agent (the platform has a single agent)."""
+    return [ehs_agent.metadata()]
 
 
 @router.get("/health", response_model=DomoConnectivityResult)
 async def ai_health(
-    probe: bool = Query(False, description="When true, executes a live DomoGPT text generation ping"),
+    probe: bool = Query(False, description="When true, bypasses the short result cache and probes DomoGPT again"),
 ):
-    """Inspect DomoGPT integration status safely without leaking credentials."""
-    if not probe:
-        return DomoConnectivityResult(
-            configured=settings.is_domo_configured,
-            connected=settings.is_domo_configured,
-            endpoint=settings.domo_generation_url,
-            configured_model=settings.DOMO_AI_MODEL,
-            message=(
-                "DomoGPT developer token configured in backend/.env. Pass ?probe=true to verify live upstream response."
-                if settings.is_domo_configured
-                else "DOMO_DEVELOPER_TOKEN is missing or set to placeholder in backend/.env."
-            ),
-        )
-    return await domogpt_service.check_connectivity()
+    """Inspect DomoGPT status. `connected` reflects a real upstream probe (cached ~120s); probe=true forces a fresh one."""
+    return await domogpt_service.get_cached_connectivity(force=probe)
 
 
 @router.post("/query", response_model=AIQueryResponse)
@@ -66,14 +54,15 @@ async def query_ai_assistant(
     db: Session = Depends(get_db),
 ):
     """
-    Execute an EHS safety inquiry via EHS Orchestrator -> Specialist Agent(s) ->
-    Read-only Neon PostgreSQL retrieval -> Shared DomoGPT synthesis.
+    Execute an EHS safety inquiry with the EHS Safety Agent: DomoGPT decides which of the two
+    read-only tools (inspect_schema, run_query) to call over the approved ehs_core tables, then answers.
     """
+    plant_id = plant_filter(payload.plant_id)
     try:
-        return await ehs_orchestrator.handle_query(
+        return await ehs_agent.handle_query(
             db=db,
             user_question=payload.prompt,
-            plant_id=payload.plant_id,
+            plant_id=plant_id,
             target_agent=payload.target_agent,
         )
     except KeyError as exc:

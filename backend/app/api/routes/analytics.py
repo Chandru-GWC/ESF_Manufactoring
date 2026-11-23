@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional
 from app.core.database import get_db
+from app.core.deps import ACTOR, plant_filter
 from app.models.workforce_maintenance import WorkforceAttendance, MaintenanceWorkOrder
 from app.models.ehs_event import EhsEvent
 from app.schemas.analytics import (
@@ -20,6 +21,7 @@ def get_global_operations_overview(
     plant_id: Optional[str] = Query(None, description="Optional plant scope filter"),
     db: Session = Depends(get_db)
 ):
+    plant_id = plant_filter(plant_id)
     """
     Computes unified operational safety summary directly from Neon PostgreSQL tables.
     Zero fabricated numbers.
@@ -84,6 +86,7 @@ def get_workforce_records(
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db)
 ):
+    plant_id = plant_filter(plant_id)
     query = db.query(WorkforceAttendance)
     if plant_id:
         query = query.filter(WorkforceAttendance.plant_id == plant_id)
@@ -100,6 +103,7 @@ def get_workforce_summary(
     plant_id: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
+    plant_id = plant_filter(plant_id)
     q = db.query(WorkforceAttendance)
     if plant_id:
         q = q.filter(WorkforceAttendance.plant_id == plant_id)
@@ -137,6 +141,7 @@ def get_maintenance_work_orders(
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db)
 ):
+    plant_id = plant_filter(plant_id)
     query = db.query(MaintenanceWorkOrder)
     if plant_id:
         query = query.filter(MaintenanceWorkOrder.plant_id == plant_id)
@@ -151,6 +156,7 @@ def get_maintenance_summary(
     plant_id: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
+    plant_id = plant_filter(plant_id)
     q = db.query(MaintenanceWorkOrder)
     if plant_id:
         q = q.filter(MaintenanceWorkOrder.plant_id == plant_id)

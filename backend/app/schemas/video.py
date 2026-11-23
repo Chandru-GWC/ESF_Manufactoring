@@ -52,6 +52,7 @@ class VideoAnalysisResponse(BaseModel):
     confidence_note: Optional[str] = None
     evidence_frame_url: Optional[str] = None
     annotated_video_url: Optional[str] = None
+    original_video_url: Optional[str] = None  # the uploaded original, kept on the server
     human_review_status: str = "PENDING_REVIEW"
     human_review_comment: Optional[str] = None
     model_used: Optional[str] = None

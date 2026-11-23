@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Whole-app scale: every rem-based size (text, spacing, widths) follows this root size (browser default is 16px). */
+html {
+  font-size: 13px;
+}
+
+/* EHS SAFETY AI — ENTERPRISE LIGHT DESIGN SYSTEM (SINGLE SOURCE OF TRUTH) */
+
+:root {
+  color-scheme: light;
+
+  /* Core Industrial Palette (Strict Light Theme, Zero Purple) */
+  --accent-primary: #C2410C;
+  --accent-hover: #9A3412;
+  --accent-subtle: #FFF7ED;
+
+  /* Compatibility Semantic Aliases */
+  --brand-purple: #C2410C;
+  --purple-soft: #FFF7ED;
+  --brand-blue: #2563EB;
+  --blue-soft: #EFF6FF;
+  --brand-orange: #EA580C;
+  --peach-soft: #FFF7ED;
+  --brand-navy: #111827;
+  --brand-white: #FFFFFF;
+  --brand-bg: #F7F8FA;
+  --sky: #3B82F6;
+  --cyan: #0891B2;
+
+  /* Crisp Light Surfaces & Borders */
+  --bg-app: #F7F8FA;
+  --bg-surface: #FFFFFF;
+  --bg-subtle: #F1F5F9;
+  --bg-muted: #E2E8F0;
+
+  /* Light Sidebar Chrome */
+  --sidebar-bg: #FFFFFF;
+  --sidebar-surface: #F8FAFC;
+  --sidebar-border: #E2E8F0;
+  --sidebar-text: #111827;
+  --sidebar-text-muted: #64748B;
+  --sidebar-active: #C2410C;
+
+  /* Text Hierarchy (Deep Charcoal, High Contrast >= 4.5:1) */
+  --text-primary: #111827;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+  --text-disabled: #94A3B8;
+
+  /* Hairline Borders */
+  --border-subtle: #E2E8F0;
+  --border-default: #CBD5E1;
+  --border-strong: #94A3B8;
+
+  /* Operational Severity Tokens */
+  --severity-critical-text: #991B1B;
+  --severity-critical-bg: #FEF2F2;
+  --severity-critical-border: #FCA5A5;
+  --severity-critical-dot: #DC2626;
+
+  --severity-high-text: #9A3412;
+  --severity-high-bg: #FFF7ED;
+  --severity-high-border: #FDBA74;
+  --severity-high-dot: #EA580C;
+
+  --severity-warning-text: #92400E;
+  --severity-warning-bg: #FFFBEB;
+  --severity-warning-border: #FCD34D;
+  --severity-warning-dot: #D97706;
+
+  --severity-success-text: #166534;
+  --severity-success-bg: #F0FDF4;
+  --severity-success-border: #86EFAC;
+  --severity-success-dot: #16A34A;
+
+  --severity-info-text: #1E40AF;
+  --severity-info-bg: #EFF6FF;
+  --severity-info-border: #93C5FD;
+  --severity-info-dot: #2563EB;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+/* Crops the bottom-right generator watermark from our own generated clips (display only) */
+.wm-crop {
+  transform: scale(1.15);
+  transform-origin: 0 0;
+}
+
+/* Tabular figures for telemetry & KPIs */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Accessible focus ring */
+.focus-ring {
+  @apply outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-1 focus-visible:ring-offset-canvas-surface;
+}
+
+/* Reduced motion accessibility fallback */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
