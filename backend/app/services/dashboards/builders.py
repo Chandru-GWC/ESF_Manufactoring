@@ -195,6 +195,22 @@ def _events(rows: List[Dict[str, Any]], plant: Optional[str]) -> DashboardRespon
             type="donut", title="Events by type", subtitle="What kind of events are logged", unit="events",
             slices=[ChartSlice(label=_label(t), value=n) for t, n in types.most_common()],
         ),
+        ChartSpec(
+            type="horizontal_bar",
+            title="Corrective Actions by Status",
+            subtitle="Resolution state of open and assigned actions",
+            unit="actions",
+            **_axes("Status", "Actions"),
+            series=[ChartSeries(name="Actions", data=[ChartPoint(x=_label(st), y=n) for st, n in Counter(r["action_status"] for r in rows).most_common()])],
+        ),
+        ChartSpec(
+            type="bar",
+            title="Incidents and Observations by Area",
+            subtitle="Shop-floor hazard distribution across operational zones",
+            unit="events",
+            **_axes("Plant Area", "Events"),
+            series=[ChartSeries(name="Events", data=[ChartPoint(x=_label(a), y=sum(1 for r in rows if r["area"] == a)) for a in area_order[:6]])],
+        ),
     ]
 
     sample = rows[:5]
@@ -319,6 +335,32 @@ def _attendance(db: Session, plant: Optional[str]) -> DashboardResponse:
             **_axes("Status", "Records"),
             series=[ChartSeries(name="Records", data=[ChartPoint(x=_label(k), y=n) for k, n in status.most_common(5)])],
         ),
+        ChartSpec(
+            type="donut",
+            title="Safety Training Qualification Status",
+            subtitle="Workforce active qualification compliance share",
+            unit="employees",
+            slices=[
+                ChartSlice(label="Compliant / Qualified", value=max(0, n_emp - n_expired)),
+                ChartSlice(label="Expired Safety Training", value=n_expired),
+            ],
+        ),
+        ChartSpec(
+            type="bar",
+            title="Overtime Hours Logged by Shift",
+            subtitle="Overtime burden distribution across operating shifts",
+            unit="hours",
+            **_axes("Shift", "Overtime hours"),
+            series=[
+                ChartSeries(
+                    name="Overtime hours",
+                    data=[
+                        ChartPoint(x=f"Shift {s}", y=round(sum(_num(g[5]) for g in groups if g[1] == s)))
+                        for s in shift_order
+                    ],
+                )
+            ],
+        ),
     ]
 
     table = DashboardTable(
@@ -401,6 +443,21 @@ def _maintenance(rows: List[Dict[str, Any]], plant: Optional[str]) -> DashboardR
             unit="work orders",
             slices=[ChartSlice(label=_label(k), value=n) for k, n in status.most_common()],
         ),
+        ChartSpec(
+            type="bar",
+            title="Work Orders by Maintenance Type",
+            subtitle="Preventive vs corrective vs inspection tasks",
+            unit="orders",
+            **_axes("Type", "Orders"),
+            series=[ChartSeries(name="Work orders", data=[ChartPoint(x=_label(t), y=sum(1 for r in rows if r["maintenance_type"] == t)) for t in sorted(types)])],
+        ),
+        ChartSpec(
+            type="donut",
+            title="Work Order Priority Allocation",
+            subtitle="Emergency P1 vs High P2 vs Routine P3 orders",
+            unit="orders",
+            slices=[ChartSlice(label=p, value=sum(1 for r in rows if r["priority"] == p)) for p in ("P1", "P2", "P3")],
+        ),
     ]
 
     table = DashboardTable(
@@ -421,7 +478,7 @@ _BUILDERS: Dict[str, Callable[[List[Dict[str, Any]], Optional[str]], DashboardRe
 
 
 def _response(kind: str, title: str, subtitle: str, plant: Optional[str], kpis: Sequence[KpiItem], charts: Sequence[ChartSpec], table: DashboardTable) -> DashboardResponse:
-    assert len(kpis) == 5 and len(charts) == 4
+    assert len(kpis) == 5 and len(charts) == 6
     return DashboardResponse(
         kind=kind,  # type: ignore[arg-type]
         title=title,

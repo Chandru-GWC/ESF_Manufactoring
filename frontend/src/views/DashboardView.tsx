@@ -402,17 +402,18 @@ export const DashboardView: React.FC<{ kind: DashboardKind }> = ({ kind }) => {
   }, [hasSubFilters, table, kind, filteredEvents, filteredAttendance, filteredMaintenance]);
 
   // ---------------------------------------------------------------------------
-  // Dynamic Distinct Charts for 3 Dashboards
-  // Events: Area Wave + Trajectory Line + Hazard Heatmap + Classification Donut
-  // Attendance: Radial Progress Rings + Grouped Bar (Regular vs OT) + Weekday Heatmap + Ranked Horizontal Bar
-  // Maintenance: Avoided Downtime Area Wave + SLA Speedometer + Top Failure Modes Ranked Bar + Status Donut
+  // Dynamic Distinct 6 Charts for 3 Dashboards (Compact height, 3-column grid)
+  // Events: Area Wave + Trajectory Line + Hazard Heatmap + Classification Donut + Action Status Bar + Area Bar
+  // Attendance: Radial Compliance Rings + Grouped Bar (Regular vs OT) + Weekday Heatmap + Status Bar + Training Donut + Overtime Bar
+  // Maintenance: Avoided Downtime Wave + SLA Speedometer + Failure Modes Ranked Bar + Status Donut + Type Bar + Priority Donut
   // ---------------------------------------------------------------------------
   const displayedCharts = useMemo((): ChartSpec[] => {
     const hasLegacyAttendance = kind === 'attendance' && shown?.charts?.[0]?.type !== 'radial_gauge';
     const hasLegacyMaintenance = kind === 'maintenance' && shown?.charts?.[1]?.type !== 'speedometer';
+    const hasLegacyCount = !shown?.charts || shown.charts.length < 6;
 
-    if (!hasSubFilters && shown?.charts && !hasLegacyAttendance && !hasLegacyMaintenance) {
-      return shown.charts.slice(0, 4);
+    if (!hasSubFilters && shown?.charts && !hasLegacyCount && !hasLegacyAttendance && !hasLegacyMaintenance) {
+      return shown.charts.slice(0, 6);
     }
 
     if (kind === 'events') {
@@ -421,6 +422,8 @@ export const DashboardView: React.FC<{ kind: DashboardKind }> = ({ kind }) => {
       const weekMap = new Map<string, { crit: number; high: number }>();
       const areaCatMap = new Map<string, number>();
       const typeMap = new Map<string, number>();
+      const actionStatusMap = new Map<string, number>();
+      const areaCountMap = new Map<string, number>();
 
       events.forEach(e => {
         const d = new Date(e.event_ts);
@@ -447,11 +450,18 @@ export const DashboardView: React.FC<{ kind: DashboardKind }> = ({ kind }) => {
 
         const t = e.event_type || 'INCIDENT';
         typeMap.set(t, (typeMap.get(t) || 0) + 1);
+
+        const st = e.action_status || 'OPEN';
+        actionStatusMap.set(st, (actionStatusMap.get(st) || 0) + 1);
+
+        const ar = e.area || 'Warehouse';
+        areaCountMap.set(ar, (areaCountMap.get(ar) || 0) + 1);
       });
 
       const mKeys = Array.from(monthMap.keys());
-      const wKeys = Array.from(weekMap.keys()).slice(-10);
+      const wKeys = Array.from(weekMap.keys()).slice(-8);
       const topTypes = Array.from(typeMap.entries()).sort((a, b) => b[1] - a[1]);
+      const topAreas = Array.from(areaCountMap.entries()).sort((a, b) => b[1] - a[1]).slice(0, 6);
 
       const areaList = ['Warehouse', 'Test', 'SMT', 'Packaging', 'Quality', 'Final Assembly'];
       const catList = ['Slip Trip Fall', 'Chemical / Hazmat', 'Electrical', 'Machine Guarding', 'Ergonomics', 'Fire / Heat'];
@@ -479,7 +489,7 @@ export const DashboardView: React.FC<{ kind: DashboardKind }> = ({ kind }) => {
         {
           type: 'line',
           title: 'Weekly High-Risk Trajectory',
-          subtitle: 'Time series of critical and high-severity incidents',
+          subtitle: 'Critical and high-severity incidents',
           unit: 'events',
           x_axis: { label: 'Week starting' },
           y_axis: { label: 'Events' },
@@ -490,7 +500,7 @@ export const DashboardView: React.FC<{ kind: DashboardKind }> = ({ kind }) => {
         },
         {
           type: 'heatmap',
-          title: 'Hazard Category × Plant Area Risk Heatmap',
+          title: 'Hazard Category × Plant Area Matrix',
           subtitle: 'Concentration of hazards across operational zones',
           unit: 'events',
           x_axis: { label: 'Plant Area' },
@@ -504,26 +514,60 @@ export const DashboardView: React.FC<{ kind: DashboardKind }> = ({ kind }) => {
           unit: 'events',
           slices: topTypes.map(([label, value]) => ({ label, value })),
         },
+        {
+          type: 'horizontal_bar',
+          title: 'Corrective Actions by Status',
+          subtitle: 'Resolution state of assigned corrective actions',
+          unit: 'actions',
+          x_axis: { label: 'Status' },
+          y_axis: { label: 'Actions' },
+          series: [
+            {
+              name: 'Actions',
+              data: Array.from(actionStatusMap.entries()).map(([x, y]) => ({ x, y })),
+            },
+          ],
+        },
+        {
+          type: 'bar',
+          title: 'Incidents & Observations by Area',
+          subtitle: 'Shop-floor hazard distribution across areas',
+          unit: 'events',
+          x_axis: { label: 'Plant Area' },
+          y_axis: { label: 'Events' },
+          series: [
+            {
+              name: 'Events',
+              data: topAreas.map(([x, y]) => ({ x, y })),
+            },
+          ],
+        },
       ];
     }
 
     if (kind === 'attendance') {
       const attendance = filteredAttendance.length > 0 ? filteredAttendance : rawAttendance;
-      const shiftTotals: Record<string, { total: number; present: number }> = {
-        'A': { total: 0, present: 0 },
-        'B': { total: 0, present: 0 },
-        'C': { total: 0, present: 0 },
+      const shiftTotals: Record<string, { total: number; present: number; ot: number }> = {
+        'A': { total: 0, present: 0, ot: 0 },
+        'B': { total: 0, present: 0, ot: 0 },
+        'C': { total: 0, present: 0, ot: 0 },
       };
       const weekHoursMap = new Map<string, { actual: number; ot: number }>();
       const weekdayShiftMiss = new Map<string, number>();
       const statusCount: Record<string, number> = {};
+      let expiredCount = 0;
 
       attendance.forEach(a => {
         const s = a.shift_id || 'A';
-        if (!shiftTotals[s]) shiftTotals[s] = { total: 0, present: 0 };
+        if (!shiftTotals[s]) shiftTotals[s] = { total: 0, present: 0, ot: 0 };
         shiftTotals[s].total += 1;
         if (a.attendance_status === 'PRESENT' || a.attendance_status === 'LATE') {
           shiftTotals[s].present += 1;
+        }
+        shiftTotals[s].ot += Number(a.overtime_hours || 0);
+
+        if (a.training_compliance === 'EXPIRED') {
+          expiredCount += 1;
         }
 
         const d = new Date(a.work_date);
@@ -552,7 +596,7 @@ export const DashboardView: React.FC<{ kind: DashboardKind }> = ({ kind }) => {
       const rateB = shiftTotals['B'].total ? Math.round((shiftTotals['B'].present / shiftTotals['B'].total) * 1000) / 10 : 91.8;
       const rateC = shiftTotals['C'].total ? Math.round((shiftTotals['C'].present / shiftTotals['C'].total) * 1000) / 10 : 97.4;
 
-      const wKeys = Array.from(weekHoursMap.keys()).slice(-8);
+      const wKeys = Array.from(weekHoursMap.keys()).slice(-7);
       const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
       const heatmapCells = [];
       for (const day of days) {
@@ -561,11 +605,14 @@ export const DashboardView: React.FC<{ kind: DashboardKind }> = ({ kind }) => {
         }
       }
 
+      const totalRecords = attendance.length || 1;
+      const compliantCount = Math.max(0, totalRecords - expiredCount);
+
       return [
         {
           type: 'radial_gauge',
           title: 'Shift Attendance & Compliance Rates',
-          subtitle: 'Active turnout and safety qualification compliance by shift',
+          subtitle: 'Active turnout and compliance by shift',
           unit: '%',
           slices: [
             { label: 'Shift A (Morning)', value: rateA },
@@ -606,7 +653,7 @@ export const DashboardView: React.FC<{ kind: DashboardKind }> = ({ kind }) => {
         {
           type: 'horizontal_bar',
           title: 'Workforce Shift Records by Status',
-          subtitle: 'Headcount distribution across attendance classifications',
+          subtitle: 'Headcount distribution across attendance states',
           unit: 'records',
           x_axis: { label: 'Status' },
           y_axis: { label: 'Records' },
@@ -619,6 +666,34 @@ export const DashboardView: React.FC<{ kind: DashboardKind }> = ({ kind }) => {
             },
           ],
         },
+        {
+          type: 'donut',
+          title: 'Safety Training Qualification Status',
+          subtitle: 'Workforce active certification compliance share',
+          unit: 'records',
+          slices: [
+            { label: 'Certified / Compliant', value: compliantCount },
+            { label: 'Expired Qualifications', value: expiredCount },
+          ],
+        },
+        {
+          type: 'bar',
+          title: 'Overtime Hours Logged by Shift',
+          subtitle: 'Overtime load distribution across operating shifts',
+          unit: 'hours',
+          x_axis: { label: 'Operating Shift' },
+          y_axis: { label: 'Overtime Hours' },
+          series: [
+            {
+              name: 'Overtime hours',
+              data: [
+                { x: 'Shift A', y: Math.round(shiftTotals['A']?.ot || 0) },
+                { x: 'Shift B', y: Math.round(shiftTotals['B']?.ot || 0) },
+                { x: 'Shift C', y: Math.round(shiftTotals['C']?.ot || 0) },
+              ],
+            },
+          ],
+        },
       ];
     }
 
@@ -627,6 +702,8 @@ export const DashboardView: React.FC<{ kind: DashboardKind }> = ({ kind }) => {
       const weekDownMap = new Map<string, number>();
       const modeCount: Record<string, number> = {};
       const statusCount: Record<string, number> = {};
+      const typeCount: Record<string, number> = {};
+      const priorityCount: Record<string, number> = {};
       let completedCount = 0;
 
       orders.forEach(m => {
@@ -645,11 +722,17 @@ export const DashboardView: React.FC<{ kind: DashboardKind }> = ({ kind }) => {
         const st = m.status || 'SCHEDULED';
         statusCount[st] = (statusCount[st] || 0) + 1;
         if (st === 'COMPLETED') completedCount += 1;
+
+        const mt = m.maintenance_type || 'PREVENTIVE';
+        typeCount[mt] = (typeCount[mt] || 0) + 1;
+
+        const pr = m.priority || 'P2';
+        priorityCount[pr] = (priorityCount[pr] || 0) + 1;
       });
 
       const total = orders.length || 1;
       const completionRate = Math.round((completedCount / total) * 1000) / 10 || 88.5;
-      const wKeys = Array.from(weekDownMap.keys()).slice(-10);
+      const wKeys = Array.from(weekDownMap.keys()).slice(-8);
       const topModes = Object.entries(modeCount)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 6);
@@ -658,7 +741,7 @@ export const DashboardView: React.FC<{ kind: DashboardKind }> = ({ kind }) => {
         {
           type: 'area',
           title: 'Downtime Avoided Trajectory',
-          subtitle: 'Estimated production hours saved through preventive work orders',
+          subtitle: 'Hours saved through preventive work orders',
           unit: 'hours',
           x_axis: { label: 'Week starting' },
           y_axis: { label: 'Hours' },
@@ -697,10 +780,35 @@ export const DashboardView: React.FC<{ kind: DashboardKind }> = ({ kind }) => {
           unit: 'orders',
           slices: Object.entries(statusCount).map(([label, value]) => ({ label, value })),
         },
+        {
+          type: 'bar',
+          title: 'Work Orders by Maintenance Type',
+          subtitle: 'Preventive vs corrective vs inspection tasks',
+          unit: 'orders',
+          x_axis: { label: 'Maintenance Type' },
+          y_axis: { label: 'Orders' },
+          series: [
+            {
+              name: 'Work orders',
+              data: Object.entries(typeCount).map(([x, y]) => ({ x, y })),
+            },
+          ],
+        },
+        {
+          type: 'donut',
+          title: 'Work Order Priority Allocation',
+          subtitle: 'Emergency P1 vs High P2 vs Routine P3 orders',
+          unit: 'orders',
+          slices: [
+            { label: 'P1 Emergency', value: priorityCount['P1'] || 0 },
+            { label: 'P2 High Priority', value: priorityCount['P2'] || 0 },
+            { label: 'P3 Routine', value: priorityCount['P3'] || 0 },
+          ],
+        },
       ];
     }
 
-    return shown?.charts?.slice(0, 4) || [];
+    return shown?.charts?.slice(0, 6) || [];
   }, [hasSubFilters, shown, kind, filteredEvents, filteredAttendance, filteredMaintenance, rawEvents, rawAttendance, rawMaintenance]);
 
   return (
@@ -766,11 +874,11 @@ export const DashboardView: React.FC<{ kind: DashboardKind }> = ({ kind }) => {
         )}
       </section>
 
-      {/* 2. Charts: distinct specialized charts with violet theme and animations */}
-      <section aria-label="Charts" className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      {/* 2. Charts: 6 distinct specialized charts with violet theme and compact heights */}
+      <section aria-label="Charts" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
         {displayedCharts && displayedCharts.length > 0
           ? displayedCharts.map((spec, i) => <ChartRenderer key={`${spec.type}-${i}-${spec.title}`} spec={spec} />)
-          : !error && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-[300px]" />)}
+          : !error && Array.from({ length: 6 }, (_, i) => <Skeleton key={i} className="h-[190px]" />)}
       </section>
 
       {/* 3. Table with "Export as" */}

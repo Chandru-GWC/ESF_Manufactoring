@@ -4,7 +4,7 @@ import { ChartCell, ChartSeries, ChartSpec, ChartType } from '../../types/ehs';
 /**
  * Pure-SVG renderer for the 12 chart types:
  * line, area, bar, horizontal_bar, stacked_bar, grouped_bar, pie, donut, heatmap, scatter, radial_gauge, speedometer.
- * Tailored with modern violet/purple theme palette and smooth animations.
+ * Compact height design tailored with modern violet theme and animations.
  */
 
 export const CHART_PALETTE = [
@@ -64,7 +64,7 @@ export function formatValue(v: number, unit?: string): string {
 const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, Math.max(1, n - 1))}…` : s);
 const pretty = (s: string | number) => String(s).replace(/_/g, ' ');
 
-function niceTicks(min: number, max: number, count = 5): { ticks: number[]; min: number; max: number } {
+function niceTicks(min: number, max: number, count = 4): { ticks: number[]; min: number; max: number } {
   let lo = Math.min(min, 0);
   let hi = Math.max(max, 0);
   if (hi === lo) hi = lo + 1;
@@ -170,19 +170,19 @@ const YAxis: React.FC<{ f: Frame; ticks: number[]; scale: (v: number) => number;
           y1={scale(t)}
           y2={scale(t)}
           stroke={t === 0 ? AXIS : GRID}
-          strokeWidth={t === 0 ? 1.2 : 1}
-          strokeDasharray={t === 0 ? undefined : '3 4'}
+          strokeWidth={t === 0 ? 1 : 0.8}
+          strokeDasharray={t === 0 ? undefined : '2 3'}
         />
-        <text x={f.left - 6} y={scale(t) + 3} textAnchor="end" fontSize="9.5" fill={MUTED} fontFamily="monospace">
+        <text x={f.left - 5} y={scale(t) + 3} textAnchor="end" fontSize="8.5" fill={MUTED} fontFamily="monospace">
           {formatValue(t)}
         </text>
       </g>
     ))}
     {(label || unit) && (
       <text
-        transform={`translate(11 ${f.top + f.plotH / 2}) rotate(-90)`}
+        transform={`translate(9 ${f.top + f.plotH / 2}) rotate(-90)`}
         textAnchor="middle"
-        fontSize="10"
+        fontSize="9"
         fontWeight="600"
         fill={INK}
         fontFamily="inherit"
@@ -195,7 +195,7 @@ const YAxis: React.FC<{ f: Frame; ticks: number[]; scale: (v: number) => number;
 
 const XLabel: React.FC<{ f: Frame; label?: string }> = ({ f, label }) =>
   label ? (
-    <text x={f.left + f.plotW / 2} y={f.H - 5} textAnchor="middle" fontSize="10" fontWeight="600" fill={INK} fontFamily="inherit">
+    <text x={f.left + f.plotW / 2} y={f.H - 3} textAnchor="middle" fontSize="9" fontWeight="600" fill={INK} fontFamily="inherit">
       {label}
     </text>
   ) : null;
@@ -203,14 +203,14 @@ const XLabel: React.FC<{ f: Frame; label?: string }> = ({ f, label }) =>
 /** True when the category labels do not fit horizontally and have to be rotated. */
 const needsRotation = (cats: string[], plotW: number) => {
   const band = plotW / Math.max(1, cats.length);
-  return band < Math.max(...cats.map(c => pretty(c).length)) * 5.4 + 4 && band >= 13;
+  return band < Math.max(...cats.map(c => pretty(c).length)) * 5 + 4 && band >= 13;
 };
 
 /** Category labels under a band axis; rotated and thinned out when they do not fit. */
 const CategoryLabels: React.FC<{ f: Frame; cats: string[]; bandW: number }> = ({ f, cats, bandW }) => {
   const rotate = needsRotation(cats, bandW * cats.length);
-  const every = bandW >= 13 ? 1 : Math.ceil(13 / Math.max(bandW, 1));
-  const y = f.top + f.plotH + 13;
+  const every = bandW >= 14 ? 1 : Math.ceil(14 / Math.max(bandW, 1));
+  const y = f.top + f.plotH + 11;
   return (
     <g>
       {cats.map((c, i) =>
@@ -220,12 +220,12 @@ const CategoryLabels: React.FC<{ f: Frame; cats: string[]; bandW: number }> = ({
             x={f.left + bandW * (i + 0.5)}
             y={y}
             textAnchor={rotate ? 'end' : 'middle'}
-            transform={rotate ? `rotate(-35 ${f.left + bandW * (i + 0.5)} ${y - 3})` : undefined}
-            fontSize="9.5"
+            transform={rotate ? `rotate(-30 ${f.left + bandW * (i + 0.5)} ${y - 2})` : undefined}
+            fontSize="8.5"
             fill={INK}
             fontFamily="inherit"
           >
-            {clip(pretty(c), rotate ? 16 : Math.max(5, Math.floor(bandW / 5.2)))}
+            {clip(pretty(c), rotate ? 14 : Math.max(4, Math.floor(bandW / 5)))}
           </text>
         )
       )}
@@ -234,7 +234,7 @@ const CategoryLabels: React.FC<{ f: Frame; cats: string[]; bandW: number }> = ({
 };
 
 /* ------------------------------------------------------------------------------------------------
- * line / area / scatter
+ * line / area / scatter (Compact height 160px)
  * ---------------------------------------------------------------------------------------------- */
 function smoothPath(pts: readonly (readonly [number, number])[]): string {
   const n = pts.length;
@@ -269,20 +269,20 @@ const LineAreaChart: React.FC<{ spec: ChartSpec; area: boolean }> = ({ spec, are
   const cum = (si: number, c: string) => series.slice(0, si + 1).reduce((t, _, k) => t + at(k, c), 0);
   const allY = stacked ? cats.flatMap(c => [0, cum(series.length - 1, c)]) : series.flatMap(s => s.data.map(p => p.y));
   const { ticks, min, max } = niceTicks(Math.min(...allY), Math.max(...allY));
-  const rotated = needsRotation(cats, 520 - 54 - 18);
-  const f = makeFrame(520, 230, { left: 54, right: 24, top: 14, bottom: rotated ? 66 : 36 });
+  const rotated = needsRotation(cats, 520 - 46 - 16);
+  const f = makeFrame(520, 160, { left: 46, right: 16, top: 12, bottom: rotated ? 44 : 26 });
   const y = (v: number) => f.top + f.plotH - ((v - min) / (max - min)) * f.plotH;
   const band = f.plotW / cats.length;
-  const edge = cats.length > 1 ? 14 : 0;
+  const edge = cats.length > 1 ? 12 : 0;
   const x = (i: number) =>
     cats.length > 1 ? f.left + edge + ((f.plotW - 2 * edge) * i) / (cats.length - 1) : f.left + f.plotW / 2;
-  const labelValues = series.length === 1 && cats.length <= 12;
+  const labelValues = series.length === 1 && cats.length <= 10;
 
   return (
     <svg viewBox={`0 0 ${f.W} ${f.H}`} className="w-full h-auto" role="img" aria-label={spec.title}>
       <defs>
-        <filter id="violet-glow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#7C3AED" floodOpacity="0.2" />
+        <filter id={`violet-glow-${spec.title.replace(/\W/g, '')}`} x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="2" stdDeviation="2.5" floodColor="#7C3AED" floodOpacity="0.2" />
         </filter>
       </defs>
       <YAxis f={f} ticks={ticks} scale={y} label={spec.y_axis?.label} unit={spec.unit} />
@@ -312,21 +312,21 @@ const LineAreaChart: React.FC<{ spec: ChartSpec; area: boolean }> = ({ spec, are
               d={line}
               fill="none"
               stroke={COLOR(si)}
-              strokeWidth="2.8"
+              strokeWidth="2.4"
               strokeLinejoin="round"
               strokeLinecap="round"
-              filter="url(#violet-glow)"
+              filter={`url(#violet-glow-${spec.title.replace(/\W/g, '')})`}
             />
             {pts.map(([px, py, p]) => (
               <g key={`${p.x}-${p.y}`} className="group cursor-pointer">
-                <circle cx={px} cy={py} r={pts.length > 14 ? 3 : 4} fill="#FFFFFF" stroke={COLOR(si)} strokeWidth="2.5" />
+                <circle cx={px} cy={py} r={pts.length > 14 ? 2.5 : 3.5} fill="#FFFFFF" stroke={COLOR(si)} strokeWidth="2" />
                 <title>{`${s.name} · ${pretty(p.x)}: ${formatValue(p.y, spec.unit)}`}</title>
                 {labelValues && (
                   <text
                     x={px}
-                    y={py - 8}
+                    y={py - 6}
                     textAnchor="middle"
-                    fontSize="9.5"
+                    fontSize="8.5"
                     fontWeight="700"
                     fill={COLOR(si)}
                     fontFamily="monospace"
@@ -352,7 +352,7 @@ const ScatterChart: React.FC<{ spec: ChartSpec }> = ({ spec }) => {
   const xs = raw.map(xv);
   const xt = niceTicks(Math.min(...xs, 0), Math.max(...xs, numericX ? 0 : cats.length - 1));
   const yt = niceTicks(Math.min(...raw.map(r => r.y)), Math.max(...raw.map(r => r.y)));
-  const f = makeFrame(520, 260, { left: 54, right: 18, top: 14, bottom: 40 });
+  const f = makeFrame(520, 160, { left: 46, right: 16, top: 12, bottom: 28 });
   const X = (v: number) => f.left + ((v - xt.min) / (xt.max - xt.min)) * f.plotW;
   const Y = (v: number) => f.top + f.plotH - ((v - yt.min) / (yt.max - yt.min)) * f.plotH;
 
@@ -362,7 +362,7 @@ const ScatterChart: React.FC<{ spec: ChartSpec }> = ({ spec }) => {
       {xt.ticks.map(t => (
         <g key={t}>
           <line x1={X(t)} x2={X(t)} y1={f.top} y2={f.top + f.plotH} stroke={GRID} strokeDasharray="3 4" />
-          <text x={X(t)} y={f.top + f.plotH + 13} textAnchor="middle" fontSize="9.5" fill={MUTED} fontFamily="monospace">
+          <text x={X(t)} y={f.top + f.plotH + 11} textAnchor="middle" fontSize="8.5" fill={MUTED} fontFamily="monospace">
             {numericX ? formatValue(t) : clip(pretty(cats[Math.round(t)] ?? ''), 10)}
           </text>
         </g>
@@ -376,11 +376,11 @@ const ScatterChart: React.FC<{ spec: ChartSpec }> = ({ spec }) => {
               key={`${s.name}-${i}`}
               cx={X(xv(r))}
               cy={Y(p.y)}
-              r={5}
+              r={4}
               fill={COLOR(si)}
               fillOpacity={0.8}
               stroke="#fff"
-              strokeWidth="1.5"
+              strokeWidth="1.2"
             >
               <title>{`${s.name} · ${pretty(p.x)}: ${formatValue(p.y, spec.unit)}`}</title>
             </circle>
@@ -392,7 +392,7 @@ const ScatterChart: React.FC<{ spec: ChartSpec }> = ({ spec }) => {
 };
 
 /* ------------------------------------------------------------------------------------------------
- * bar / grouped_bar / stacked_bar (vertical) and horizontal_bar
+ * bar / grouped_bar / stacked_bar (Compact height 160px)
  * ---------------------------------------------------------------------------------------------- */
 const BarChart: React.FC<{ spec: ChartSpec; mode: 'bar' | 'grouped' | 'stacked' }> = ({ spec, mode }) => {
   const series = cleanSeries(spec.series);
@@ -403,13 +403,13 @@ const BarChart: React.FC<{ spec: ChartSpec; mode: 'bar' | 'grouped' | 'stacked' 
   const maxY = stacked ? Math.max(...totals) : Math.max(...series.flatMap(s => s.data.map(p => p.y)));
   const minY = stacked ? 0 : Math.min(...series.flatMap(s => s.data.map(p => p.y)));
   const { ticks, min, max } = niceTicks(minY, maxY);
-  const rotated = needsRotation(cats, 520 - 54 - 18);
-  const f = makeFrame(520, 230, { left: 54, right: 18, top: 16, bottom: rotated ? 66 : 36 });
+  const rotated = needsRotation(cats, 520 - 46 - 16);
+  const f = makeFrame(520, 160, { left: 46, right: 16, top: 12, bottom: rotated ? 44 : 26 });
   const y = (v: number) => f.top + f.plotH - ((v - min) / (max - min)) * f.plotH;
   const band = f.plotW / cats.length;
-  const groupW = Math.min(band * 0.72, 64 * series.length);
+  const groupW = Math.min(band * 0.72, 54 * series.length);
   const barW = stacked || series.length === 1 ? groupW : groupW / series.length;
-  const showValues = band >= 22 && cats.length <= 16;
+  const showValues = band >= 24 && cats.length <= 12;
 
   return (
     <svg viewBox={`0 0 ${f.W} ${f.H}`} className="w-full h-auto" role="img" aria-label={spec.title}>
@@ -445,7 +445,7 @@ const BarChart: React.FC<{ spec: ChartSpec; mode: 'bar' | 'grouped' | 'stacked' 
                     y={top}
                     width={Math.max(2, barW - 1)}
                     height={h}
-                    rx={3.5}
+                    rx={3}
                     fill={`url(#bar-grad-${series.length === 1 ? 0 : si})`}
                   >
                     <title>{`${s.name} · ${pretty(c)}: ${formatValue(v, spec.unit)}`}</title>
@@ -453,9 +453,9 @@ const BarChart: React.FC<{ spec: ChartSpec; mode: 'bar' | 'grouped' | 'stacked' 
                   {showValues && !stacked && (
                     <text
                       x={x0 + barW / 2}
-                      y={v >= 0 ? top - 4 : bottom + 11}
+                      y={v >= 0 ? top - 3 : bottom + 9}
                       textAnchor="middle"
-                      fontSize="9"
+                      fontSize="8.5"
                       fontWeight="700"
                       fill={INK}
                       fontFamily="monospace"
@@ -469,9 +469,9 @@ const BarChart: React.FC<{ spec: ChartSpec; mode: 'bar' | 'grouped' | 'stacked' 
             {stacked && showValues && (
               <text
                 x={cx}
-                y={y(totals[ci]) - 4}
+                y={y(totals[ci]) - 3}
                 textAnchor="middle"
-                fontSize="9"
+                fontSize="8.5"
                 fontWeight="700"
                 fill={INK}
                 fontFamily="monospace"
@@ -488,17 +488,17 @@ const BarChart: React.FC<{ spec: ChartSpec; mode: 'bar' | 'grouped' | 'stacked' 
 
 const HorizontalBarChart: React.FC<{ spec: ChartSpec }> = ({ spec }) => {
   const series = cleanSeries(spec.series);
-  const cats = uniq(series.flatMap(s => s.data.map(p => p.x)));
+  const cats = uniq(series.flatMap(s => s.data.map(p => p.x))).slice(0, 6);
   const val = (si: number, cat: string) => series[si].data.find(p => p.x === cat)?.y ?? 0;
   const allY = series.flatMap(s => s.data.map(p => p.y));
   const { ticks, min, max } = niceTicks(Math.min(...allY), Math.max(...allY));
-  const labelW = Math.min(130, 10 + Math.max(...cats.map(c => pretty(c).length)) * 5.4);
-  const rowH = Math.max(26, 20 + series.length * 12);
-  const H = Math.max(180, 30 + cats.length * rowH + 44);
-  const f = makeFrame(520, H, { left: 26 + labelW, right: 46, top: 10, bottom: 38 });
+  const labelW = Math.min(115, 8 + Math.max(...cats.map(c => pretty(c).length)) * 5);
+  const rowH = Math.max(18, 14 + series.length * 8);
+  const H = Math.max(145, 18 + cats.length * rowH + 28);
+  const f = makeFrame(520, H, { left: 18 + labelW, right: 38, top: 8, bottom: 26 });
   const X = (v: number) => f.left + ((v - min) / (max - min)) * f.plotW;
   const band = f.plotH / cats.length;
-  const barH = Math.min(22, (band * 0.72) / series.length);
+  const barH = Math.min(16, (band * 0.72) / series.length);
 
   return (
     <svg viewBox={`0 0 ${f.W} ${f.H}`} className="w-full h-auto" role="img" aria-label={spec.title}>
@@ -510,37 +510,20 @@ const HorizontalBarChart: React.FC<{ spec: ChartSpec }> = ({ spec }) => {
             y1={f.top}
             y2={f.top + f.plotH}
             stroke={t === 0 ? AXIS : GRID}
-            strokeWidth={t === 0 ? 1.2 : 1}
-            strokeDasharray={t === 0 ? undefined : '3 4'}
+            strokeWidth={t === 0 ? 1 : 0.8}
+            strokeDasharray={t === 0 ? undefined : '2 3'}
           />
-          <text x={X(t)} y={f.top + f.plotH + 13} textAnchor="middle" fontSize="9.5" fill={MUTED} fontFamily="monospace">
+          <text x={X(t)} y={f.top + f.plotH + 11} textAnchor="middle" fontSize="8.5" fill={MUTED} fontFamily="monospace">
             {formatValue(t)}
           </text>
         </g>
       ))}
-      {(spec.y_axis?.label || spec.unit) && (
-        <text x={f.left + f.plotW / 2} y={f.H - 5} textAnchor="middle" fontSize="10" fontWeight="600" fill={INK} fontFamily="inherit">
-          {spec.y_axis?.label ?? spec.unit}
-        </text>
-      )}
-      {spec.x_axis?.label && (
-        <text
-          transform={`translate(11 ${f.top + f.plotH / 2}) rotate(-90)`}
-          textAnchor="middle"
-          fontSize="10"
-          fontWeight="600"
-          fill={INK}
-          fontFamily="inherit"
-        >
-          {spec.x_axis.label}
-        </text>
-      )}
       {cats.map((c, ci) => {
         const cy = f.top + band * (ci + 0.5);
         return (
           <g key={c}>
-            <text x={f.left - 8} y={cy + 3.5} textAnchor="end" fontSize="9.5" fontWeight="600" fill={INK} fontFamily="inherit">
-              {clip(pretty(c), Math.floor(labelW / 5.2))}
+            <text x={f.left - 6} y={cy + 3} textAnchor="end" fontSize="9" fontWeight="600" fill={INK} fontFamily="inherit">
+              {clip(pretty(c), Math.floor(labelW / 5))}
             </text>
             {series.map((s, si) => {
               if (!s.data.some(p => p.x === c)) return null;
@@ -552,18 +535,18 @@ const HorizontalBarChart: React.FC<{ spec: ChartSpec }> = ({ spec }) => {
                 <g key={s.name}>
                   <rect
                     x={x0}
-                    y={y0 + 1}
+                    y={y0 + 0.5}
                     width={Math.max(2, x1 - x0)}
-                    height={Math.max(3, barH - 2)}
-                    rx={3.5}
+                    height={Math.max(2.5, barH - 1)}
+                    rx={2.5}
                     fill={COLOR(series.length === 1 ? 0 : si)}
                   >
                     <title>{`${s.name} · ${pretty(c)}: ${formatValue(v, spec.unit)}`}</title>
                   </rect>
                   <text
-                    x={x1 + 6}
-                    y={y0 + barH / 2 + 3.5}
-                    fontSize="9.5"
+                    x={x1 + 4}
+                    y={y0 + barH / 2 + 2.5}
+                    fontSize="8.5"
                     fontWeight="700"
                     fill={INK}
                     fontFamily="monospace"
@@ -581,24 +564,24 @@ const HorizontalBarChart: React.FC<{ spec: ChartSpec }> = ({ spec }) => {
 };
 
 /* ------------------------------------------------------------------------------------------------
- * pie / donut
+ * pie / donut (Compact height 155px)
  * ---------------------------------------------------------------------------------------------- */
 const PieChart: React.FC<{ spec: ChartSpec; donut: boolean }> = ({ spec, donut }) => {
   let slices = (Array.isArray(spec.slices) ? spec.slices : [])
     .map(s => ({ label: String(s?.label ?? ''), value: Math.max(0, num(s?.value) ?? 0) }))
     .filter(s => s.value > 0);
-  if (slices.length > 9) {
-    const head = slices.slice(0, 8);
-    const rest = slices.slice(8).reduce((a, s) => a + s.value, 0);
+  if (slices.length > 7) {
+    const head = slices.slice(0, 6);
+    const rest = slices.slice(6).reduce((a, s) => a + s.value, 0);
     slices = [...head, { label: 'Other', value: rest }];
   }
   const total = slices.reduce((a, s) => a + s.value, 0);
   const W = 520;
-  const H = 250;
-  const cx = 130;
+  const H = 155;
+  const cx = 95;
   const cy = H / 2;
-  const R = 98;
-  const r = donut ? 62 : 0;
+  const R = 66;
+  const r = donut ? 42 : 0;
   let angle = -Math.PI / 2;
   const arcs = slices.map((s, i) => {
     const frac = total > 0 ? s.value / total : 0;
@@ -627,19 +610,19 @@ const PieChart: React.FC<{ spec: ChartSpec; donut: boolean }> = ({ spec, donut }
             {r > 0 && <circle cx={cx} cy={cy} r={r} fill="#fff" />}
           </g>
         ) : (
-          <path key={a.label} d={a.d} fill={COLOR(a.i)} stroke="#fff" strokeWidth="2.5" strokeLinejoin="round">
+          <path key={a.label} d={a.d} fill={COLOR(a.i)} stroke="#fff" strokeWidth="2" strokeLinejoin="round">
             <title>{`${pretty(a.label)}: ${formatValue(a.value, spec.unit)} (${(a.frac * 100).toFixed(1)}%)`}</title>
           </path>
         )
       )}
       {arcs.map(a =>
-        a.frac >= 0.07 ? (
+        a.frac >= 0.08 ? (
           <text
             key={`t-${a.label}`}
             x={a.lx}
-            y={a.ly + 3.5}
+            y={a.ly + 3}
             textAnchor="middle"
-            fontSize="10"
+            fontSize="9"
             fontWeight="800"
             fill="#fff"
             fontFamily="inherit"
@@ -651,24 +634,24 @@ const PieChart: React.FC<{ spec: ChartSpec; donut: boolean }> = ({ spec, donut }
       )}
       {donut && (
         <g>
-          <text x={cx} y={cy - 2} textAnchor="middle" fontSize="22" fontWeight="800" fill="#4C1D95" fontFamily="inherit">
+          <text x={cx} y={cy - 1} textAnchor="middle" fontSize="18" fontWeight="800" fill="#4C1D95" fontFamily="inherit">
             {formatValue(total)}
           </text>
-          <text x={cx} y={cy + 15} textAnchor="middle" fontSize="10.5" fontWeight="600" fill={MUTED} fontFamily="inherit">
-            {spec.unit ? `total ${spec.unit}` : 'total'}
+          <text x={cx} y={cy + 13} textAnchor="middle" fontSize="9" fontWeight="600" fill={MUTED} fontFamily="inherit">
+            {spec.unit ? spec.unit : 'total'}
           </text>
         </g>
       )}
       {/* legend */}
       {arcs.map((a, row) => {
-        const ly = Math.max(18, cy - (arcs.length * 21) / 2) + row * 21;
+        const ly = Math.max(16, cy - (arcs.length * 19) / 2) + row * 19;
         return (
           <g key={`l-${a.label}`}>
-            <rect x={270} y={ly - 9} width={11} height={11} rx={3} fill={COLOR(a.i)} />
-            <text x={288} y={ly} fontSize="11" fill={INK} fontFamily="inherit">
-              {clip(pretty(a.label), 24)}
+            <rect x={200} y={ly - 8} width={9} height={9} rx={2.5} fill={COLOR(a.i)} />
+            <text x={216} y={ly} fontSize="10" fill={INK} fontFamily="inherit">
+              {clip(pretty(a.label), 22)}
             </text>
-            <text x={W - 10} y={ly} textAnchor="end" fontSize="11" fontWeight="700" fill={INK} fontFamily="monospace">
+            <text x={W - 8} y={ly} textAnchor="end" fontSize="10" fontWeight="700" fill={INK} fontFamily="monospace">
               {formatValue(a.value)} · {(a.frac * 100).toFixed(0)}%
             </text>
           </g>
@@ -679,10 +662,9 @@ const PieChart: React.FC<{ spec: ChartSpec; donut: boolean }> = ({ spec, donut }
 };
 
 /* ------------------------------------------------------------------------------------------------
- * heatmap (Violet-theme intensity gradient)
+ * heatmap (Compact height 150px)
  * ---------------------------------------------------------------------------------------------- */
 const heat = (t: number) => {
-  // Soft lavender-white (245, 243, 255) to deep royal violet (91, 33, 182)
   const lo = [245, 243, 255];
   const hi = [91, 33, 182];
   const c = lo.map((l, i) => Math.round(l + (hi[i] - l) * Math.min(1, Math.max(0, t))));
@@ -694,18 +676,18 @@ const HeatmapChart: React.FC<{ spec: ChartSpec }> = ({ spec }) => {
     .map((c: ChartCell) => ({ x: String(c.x), y: String(c.y), v: num(c.value) }))
     .filter((c): c is { x: string; y: string; v: number } => c.v !== null);
   const cols = uniq(cells.map(c => c.x));
-  const rows = uniq(cells.map(c => c.y));
+  const rows = uniq(cells.map(c => c.y)).slice(0, 6);
   const vals = cells.map(c => c.v);
   const lo = Math.min(...vals, 0);
   const hi = Math.max(...vals, 1);
-  const labelW = Math.min(110, 12 + Math.max(...rows.map(r => pretty(r).length)) * 5.4);
-  const rotated = needsRotation(cols, 520 - (24 + labelW) - 12);
-  const cellH = Math.min(26, Math.max(18, 175 / rows.length));
-  const f = makeFrame(520, 24 + rows.length * cellH + (rotated ? 84 : 44), {
-    left: 24 + labelW,
-    right: 12,
-    top: 8,
-    bottom: rotated ? 78 : 38,
+  const labelW = Math.min(100, 10 + Math.max(...rows.map(r => pretty(r).length)) * 4.8);
+  const rotated = needsRotation(cols, 520 - (20 + labelW) - 10);
+  const cellH = Math.min(18, Math.max(14, 95 / rows.length));
+  const f = makeFrame(520, 18 + rows.length * cellH + (rotated ? 48 : 26), {
+    left: 20 + labelW,
+    right: 10,
+    top: 6,
+    bottom: rotated ? 44 : 22,
   });
   const cw = f.plotW / cols.length;
   const get = (x: string, y: string) => cells.find(c => c.x === x && c.y === y)?.v;
@@ -715,32 +697,32 @@ const HeatmapChart: React.FC<{ spec: ChartSpec }> = ({ spec }) => {
       {rows.map((r, ri) => (
         <text
           key={r}
-          x={f.left - 6}
-          y={f.top + cellH * (ri + 0.5) + 3.5}
+          x={f.left - 5}
+          y={f.top + cellH * (ri + 0.5) + 3}
           textAnchor="end"
-          fontSize="9.5"
+          fontSize="8.5"
           fontWeight="600"
           fill={INK}
           fontFamily="inherit"
         >
-          {clip(pretty(r), Math.floor(labelW / 5.2))}
+          {clip(pretty(r), Math.floor(labelW / 5))}
         </text>
       ))}
       {cols.map((c, ci) => {
         const x = f.left + cw * (ci + 0.5);
-        const y = f.top + cellH * rows.length + 13;
+        const y = f.top + cellH * rows.length + 10;
         return (
           <text
             key={c}
             x={x}
             y={y}
             textAnchor={rotated ? 'end' : 'middle'}
-            transform={rotated ? `rotate(-35 ${x} ${y - 3})` : undefined}
-            fontSize="9.5"
+            transform={rotated ? `rotate(-30 ${x} ${y - 2})` : undefined}
+            fontSize="8.5"
             fill={INK}
             fontFamily="inherit"
           >
-            {clip(pretty(c), rotated ? 16 : Math.max(5, Math.floor(cw / 5.2)))}
+            {clip(pretty(c), rotated ? 14 : Math.max(4, Math.floor(cw / 5)))}
           </text>
         );
       })}
@@ -751,21 +733,21 @@ const HeatmapChart: React.FC<{ spec: ChartSpec }> = ({ spec }) => {
           return (
             <g key={`${r}-${c}`}>
               <rect
-                x={f.left + cw * ci + 1}
-                y={f.top + cellH * ri + 1}
-                width={Math.max(2, cw - 2)}
-                height={cellH - 2}
-                rx={3.5}
+                x={f.left + cw * ci + 0.8}
+                y={f.top + cellH * ri + 0.8}
+                width={Math.max(2, cw - 1.6)}
+                height={cellH - 1.6}
+                rx={2.5}
                 fill={v === undefined ? '#F5F3FF' : heat(t)}
               >
                 <title>{`${pretty(r)} × ${pretty(c)}: ${v === undefined ? 'no data' : formatValue(v, spec.unit)}`}</title>
               </rect>
-              {v !== undefined && cw >= 24 && (
+              {v !== undefined && cw >= 22 && (
                 <text
                   x={f.left + cw * (ci + 0.5)}
-                  y={f.top + cellH * (ri + 0.5) + 3.5}
+                  y={f.top + cellH * (ri + 0.5) + 3}
                   textAnchor="middle"
-                  fontSize="10"
+                  fontSize="8.5"
                   fontWeight="700"
                   fill={t > 0.45 ? '#FFFFFF' : '#5B21B6'}
                   fontFamily="monospace"
@@ -778,28 +760,14 @@ const HeatmapChart: React.FC<{ spec: ChartSpec }> = ({ spec }) => {
           );
         })
       )}
-      <XLabel f={f} label={spec.x_axis?.label} />
-      {spec.y_axis?.label && (
-        <text
-          transform={`translate(10 ${f.top + (cellH * rows.length) / 2}) rotate(-90)`}
-          textAnchor="middle"
-          fontSize="10"
-          fontWeight="600"
-          fill={INK}
-          fontFamily="inherit"
-        >
-          {spec.y_axis.label}
-        </text>
-      )}
     </svg>
   );
 };
 
 /* ------------------------------------------------------------------------------------------------
- * radial_gauge (Shift Compliance Progress Rings - Matches sample image 80%, 75%, 50%)
+ * radial_gauge (Compact height 150px)
  * ---------------------------------------------------------------------------------------------- */
 const RadialGaugeChart: React.FC<{ spec: ChartSpec }> = ({ spec }) => {
-  // Extract rings from slices or first series
   const rings: { label: string; value: number }[] = [];
   if (Array.isArray(spec.slices) && spec.slices.length > 0) {
     spec.slices.forEach(s => {
@@ -814,17 +782,17 @@ const RadialGaugeChart: React.FC<{ spec: ChartSpec }> = ({ spec }) => {
   }
 
   const W = 520;
-  const H = 220;
+  const H = 150;
   const count = rings.length || 3;
-  const radius = 50;
-  const strokeWidth = 9;
+  const radius = 38;
+  const strokeWidth = 6.5;
   const circumference = 2 * Math.PI * radius;
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label={spec.title}>
       {rings.slice(0, 4).map((ring, idx) => {
         const cx = (W / (count + 1)) * (idx + 1);
-        const cy = 92;
+        const cy = 60;
         const pct = Math.min(100, Math.max(0, ring.value));
         const offset = circumference - (pct / 100) * circumference;
         const color = COLOR(idx);
@@ -848,14 +816,14 @@ const RadialGaugeChart: React.FC<{ spec: ChartSpec }> = ({ spec }) => {
               className="transition-all duration-700 ease-out"
             />
             {/* Percentage text */}
-            <text x={cx} y={cy + 7} textAnchor="middle" fontSize="22" fontWeight="800" fill="#4C1D95" fontFamily="inherit">
+            <text x={cx} y={cy + 5} textAnchor="middle" fontSize="17" fontWeight="800" fill="#4C1D95" fontFamily="inherit">
               {Math.round(pct)}%
             </text>
             {/* Subtitle / Ring Label */}
-            <text x={cx} y={cy + 72} textAnchor="middle" fontSize="12" fontWeight="700" fill={INK} fontFamily="inherit">
+            <text x={cx} y={cy + 52} textAnchor="middle" fontSize="11" fontWeight="700" fill={INK} fontFamily="inherit">
               {pretty(ring.label)}
             </text>
-            <text x={cx} y={cy + 88} textAnchor="middle" fontSize="10" fontWeight="600" fill={MUTED} fontFamily="monospace">
+            <text x={cx} y={cy + 66} textAnchor="middle" fontSize="9" fontWeight="600" fill={MUTED} fontFamily="monospace">
               Target: ≥90%
             </text>
           </g>
@@ -866,10 +834,9 @@ const RadialGaugeChart: React.FC<{ spec: ChartSpec }> = ({ spec }) => {
 };
 
 /* ------------------------------------------------------------------------------------------------
- * speedometer (Maintenance SLA & Equipment Reliability Arc Gauge)
+ * speedometer (Compact height 150px)
  * ---------------------------------------------------------------------------------------------- */
 const SpeedometerChart: React.FC<{ spec: ChartSpec }> = ({ spec }) => {
-  // Extract primary value
   let val = 85.0;
   let targetLabel = 'On-Time SLA Resolution';
   if (Array.isArray(spec.slices) && spec.slices.length > 0) {
@@ -881,32 +848,22 @@ const SpeedometerChart: React.FC<{ spec: ChartSpec }> = ({ spec }) => {
   }
 
   const W = 520;
-  const H = 220;
+  const H = 150;
   const cx = W / 2;
-  const cy = 155;
-  const R = 110;
-  const r = 82;
+  const cy = 112;
+  const R = 84;
+  const r = 62;
 
-  // Percentage normalized to 0-100
   const pct = Math.min(100, Math.max(0, val));
   const norm = pct / 100;
-  // Angle for needle: -180 deg to 0 deg
   const needleAngle = -180 + norm * 180;
   const rad = (needleAngle * Math.PI) / 180;
-  const needleLen = 88;
+  const needleLen = 66;
   const nx = cx + needleLen * Math.cos(rad);
   const ny = cy + needleLen * Math.sin(rad);
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label={spec.title}>
-      <defs>
-        <linearGradient id="speedo-target-grad" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#8B5CF6" />
-          <stop offset="100%" stopColor="#7C3AED" />
-        </linearGradient>
-      </defs>
-
-      {/* 3 Arc Background zones: 0-60% Warning, 60-80% Caution, 80-100% Target */}
       {/* Zone 1: 0% - 60% */}
       <path
         d={`M${cx - R},${cy} A${R},${R} 0 0 1 ${cx + R * Math.cos(-Math.PI * 0.4)},${cy + R * Math.sin(-Math.PI * 0.4)} L${
@@ -931,29 +888,28 @@ const SpeedometerChart: React.FC<{ spec: ChartSpec }> = ({ spec }) => {
         fill="#EDE9FE"
       />
 
-      {/* Ticks and benchmark labels */}
-      <text x={cx - R + 8} y={cy + 16} fontSize="10" fontWeight="700" fill="#991B1B" fontFamily="monospace">
+      <text x={cx - R + 6} y={cy + 13} fontSize="9" fontWeight="700" fill="#991B1B" fontFamily="monospace">
         0%
       </text>
-      <text x={cx + R - 18} y={cy + 16} fontSize="10" fontWeight="700" fill="#6D28D9" fontFamily="monospace">
+      <text x={cx + R - 15} y={cy + 13} fontSize="9" fontWeight="700" fill="#6D28D9" fontFamily="monospace">
         100%
       </text>
-      <text x={cx} y={cy - R + 22} textAnchor="middle" fontSize="10" fontWeight="700" fill="#5B21B6" fontFamily="inherit">
+      <text x={cx} y={cy - R + 18} textAnchor="middle" fontSize="9" fontWeight="700" fill="#5B21B6" fontFamily="inherit">
         TARGET: ≥85%
       </text>
 
       {/* Needle */}
-      <line x1={cx} y1={cy} x2={nx} y2={ny} stroke="#7C3AED" strokeWidth="4" strokeLinecap="round" />
-      <circle cx={cx} cy={cy} r={9} fill="#7C3AED" stroke="#FFFFFF" strokeWidth="3" />
-      <circle cx={cx} cy={cy} r={3} fill="#FFFFFF" />
+      <line x1={cx} y1={cy} x2={nx} y2={ny} stroke="#7C3AED" strokeWidth="3.2" strokeLinecap="round" />
+      <circle cx={cx} cy={cy} r={7} fill="#7C3AED" stroke="#FFFFFF" strokeWidth="2.5" />
+      <circle cx={cx} cy={cy} r={2.5} fill="#FFFFFF" />
 
       {/* Big readout value */}
-      <text x={cx} y={cy + 32} textAnchor="middle" fontSize="24" fontWeight="800" fill="#4C1D95" fontFamily="inherit">
+      <text x={cx} y={cy + 24} textAnchor="middle" fontSize="20" fontWeight="800" fill="#4C1D95" fontFamily="inherit">
         {val.toFixed(1)}%
       </text>
       {/* Target pill */}
-      <rect x={cx - 80} y={cy + 42} width="160" height="20" rx="10" fill="#F5F3FF" stroke="#DDD6FE" />
-      <text x={cx} y={cy + 56} textAnchor="middle" fontSize="10" fontWeight="700" fill="#6D28D9" fontFamily="inherit">
+      <rect x={cx - 70} y={cy + 29} width="140" height="17" rx="8.5" fill="#F5F3FF" stroke="#DDD6FE" />
+      <text x={cx} y={cy + 41} textAnchor="middle" fontSize="9" fontWeight="700" fill="#6D28D9" fontFamily="inherit">
         {targetLabel}
       </text>
     </svg>
@@ -1035,23 +991,29 @@ export const ChartRenderer: React.FC<{ spec: ChartSpec }> = ({ spec }) => {
 
   return (
     <figure
-      className="rounded-2xl border border-violet-100 bg-white/95 p-4 min-w-0 shadow-xs hover:border-violet-200 hover:shadow-md transition-all duration-300 [text-rendering:geometricPrecision]"
+      className="rounded-2xl border border-violet-100 bg-white/95 p-3.5 min-w-0 shadow-xs hover:border-violet-200 hover:shadow-md transition-all duration-300 [text-rendering:geometricPrecision]"
       data-chart-type={spec?.type}
     >
-      <figcaption className="mb-2 flex items-start justify-between gap-2">
+      <figcaption className="mb-1.5 flex items-start justify-between gap-2">
         <span className="min-w-0">
-          <span className="block text-sm font-bold text-ink-primary leading-tight">{title}</span>
-          {spec?.subtitle && <span className="block text-[11px] text-slate-500 mt-0.5">{spec.subtitle}</span>}
+          <span className="block text-xs font-bold text-ink-primary leading-tight truncate" title={title}>
+            {title}
+          </span>
+          {spec?.subtitle && (
+            <span className="block text-[10px] text-slate-500 mt-0.5 truncate" title={spec.subtitle}>
+              {spec.subtitle}
+            </span>
+          )}
         </span>
         {CHART_TYPES.includes(spec?.type) && (
-          <span className="shrink-0 text-[9.5px] font-mono font-bold uppercase tracking-wider text-violet-700 bg-violet-50 border border-violet-200/80 rounded-full px-2.5 py-0.5">
+          <span className="shrink-0 text-[8.5px] font-mono font-bold uppercase tracking-wider text-violet-700 bg-violet-50 border border-violet-200/80 rounded-full px-2 py-0.5">
             {TYPE_LABEL[spec.type]}
           </span>
         )}
       </figcaption>
 
       {problem ? (
-        <p role="note" className="text-xs text-slate-400 bg-violet-50/50 border border-violet-100 rounded-xl px-3 py-4 text-center">
+        <p role="note" className="text-xs text-slate-400 bg-violet-50/50 border border-violet-100 rounded-xl px-2.5 py-3 text-center">
           This chart could not be drawn ({problem}).
         </p>
       ) : (
@@ -1059,25 +1021,14 @@ export const ChartRenderer: React.FC<{ spec: ChartSpec }> = ({ spec }) => {
       )}
 
       {multi.length > 1 && (
-        <ul className="mt-2.5 flex flex-wrap gap-x-3.5 gap-y-1 text-[11px] font-semibold text-slate-600">
+        <ul className="mt-1.5 flex flex-wrap gap-x-2.5 gap-y-0.5 text-[10px] font-semibold text-slate-600">
           {multi.map((s, i) => (
-            <li key={s.name} className="inline-flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-sm" style={{ background: COLOR(i) }} aria-hidden="true" />
+            <li key={s.name} className="inline-flex items-center gap-1">
+              <span className="w-2 h-2 rounded-sm" style={{ background: COLOR(i) }} aria-hidden="true" />
               {s.name}
             </li>
           ))}
         </ul>
-      )}
-      {!problem && spec.type === 'heatmap' && (
-        <div className="mt-2 flex items-center gap-2 text-[10px] font-mono text-slate-500">
-          <span>low density</span>
-          <span
-            className="h-2 w-32 rounded-full"
-            style={{ background: `linear-gradient(90deg, ${heat(0)}, ${heat(1)})` }}
-            aria-hidden="true"
-          />
-          <span>high concentration</span>
-        </div>
       )}
     </figure>
   );
