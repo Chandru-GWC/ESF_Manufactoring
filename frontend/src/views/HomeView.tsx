@@ -331,10 +331,11 @@ export const HomeView: React.FC = () => {
         </section>
 
         <AreaLineChart
-          title="Events by Plant Area"
-          subtitle="From the events table: all events and the ones with an open corrective action."
+          title="Plant & Area Safety Distribution"
+          subtitle="All events and open actions across functional areas."
           source="ehs_core.fact_ehs_event"
           rows={live.areaRows}
+          rawEvents={rawEvents}
           loading={isLoading && !rawEvents.length}
         />
       </div>
