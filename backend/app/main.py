@@ -121,10 +121,12 @@ has_wildcard = "*" in cors_origins
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,
+    allow_origins=["*"] if has_wildcard else cors_origins,
+    allow_origin_regex=None if has_wildcard else r"https://.*\.onrender\.com",
     allow_credentials=not has_wildcard,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition"],
 )
 
 app.include_router(health.router, prefix=settings.API_V1_STR)

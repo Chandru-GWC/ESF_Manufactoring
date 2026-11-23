@@ -28,11 +28,12 @@ class Settings(BaseSettings):
     CONNECTOR_DB_MAX_OVERFLOW: int = 10
 
     # CORS
-    # Vite dev (3000), Vite default (5173) and Vite preview (4173). Override via CORS_ORIGINS env.
+    # Vite dev (3000), Vite default (5173), Vite preview (4173) and deployed Render frontends. Override via CORS_ORIGINS env.
     CORS_ORIGINS: str = (
         "http://localhost:3000,http://127.0.0.1:3000,"
         "http://localhost:5173,http://127.0.0.1:5173,"
-        "http://localhost:4173,http://127.0.0.1:4173"
+        "http://localhost:4173,http://127.0.0.1:4173,"
+        "https://frontend-dhob.onrender.com"
     )
 
     # DomoGPT Text Generation API Configuration (loaded from backend/.env)
