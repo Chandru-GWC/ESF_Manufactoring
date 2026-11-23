@@ -283,7 +283,9 @@ export type ChartType =
   | 'pie'
   | 'donut'
   | 'heatmap'
-  | 'scatter';
+  | 'scatter'
+  | 'radial_gauge'
+  | 'speedometer';
 
 export interface ChartPoint {
   x: string | number;

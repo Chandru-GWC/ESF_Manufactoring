@@ -78,7 +78,7 @@ class SpecialistAgentOutput(BaseModel):
 
 
 ChartType = Literal[
-    "line", "area", "bar", "horizontal_bar", "stacked_bar", "grouped_bar", "pie", "donut", "heatmap", "scatter"
+    "line", "area", "bar", "horizontal_bar", "stacked_bar", "grouped_bar", "pie", "donut", "heatmap", "scatter", "radial_gauge", "speedometer"
 ]
 
 
