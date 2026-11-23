@@ -7,7 +7,9 @@ import {
   Database,
   Eye,
   Factory,
+  FileSpreadsheet,
   FileText,
+  Radio,
   Server,
   ShieldAlert,
   ShieldCheck,
@@ -52,10 +54,10 @@ export const PipelineStageDetail: React.FC<PipelineStageDetailProps> = ({
             </span>
             <div>
               <h3 className="text-base font-extrabold text-ink-primary leading-tight">
-                1. Source System &amp; Data Ingestion Architecture
+                1. Source System &amp; Data Integration
               </h3>
               <p className="text-xs text-ink-muted">
-                Enterprise multi-site data ingestion across 7 manufacturing facilities grounded in Neon PostgreSQL.
+                Enterprise multi-site ingestion across 7 manufacturing facilities grounded in Neon PostgreSQL.
               </p>
             </div>
           </div>
@@ -64,21 +66,59 @@ export const PipelineStageDetail: React.FC<PipelineStageDetailProps> = ({
           </span>
         </div>
 
-        {/* Card Purpose & Explanation */}
-        <div className="p-3.5 rounded-xl border border-red-200 bg-red-50/50 space-y-2">
-          <h4 className="text-xs font-bold text-red-950 uppercase tracking-wide">
-            What is the Source System?
-          </h4>
-          <p className="text-xs text-red-900 leading-relaxed">
-            The Source System represents the enterprise data ingestion foundation of the EHS platform. It continuously aggregates shop-floor telemetry, OSHA safety logs, shift rosters, and maintenance work orders from legacy systems (SAP Plant Maintenance, Oracle MES, HR databases, and offline inspection logs) into three strictly normalized Neon PostgreSQL tables.
-          </p>
+        {/* Integration Ingestion Sources (ERP, Files, APIs) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="p-3 rounded-xl border border-sky-200 bg-sky-50/60 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-sky-950 flex items-center gap-1.5">
+                <Server className="w-4 h-4 text-sky-700" />
+                ERP &amp; MES Ingestion
+              </span>
+              <span className="text-[9.5px] font-mono font-bold text-sky-800 bg-sky-200/80 px-1.5 py-0.5 rounded">
+                SAP / Oracle
+              </span>
+            </div>
+            <p className="text-[11px] text-sky-900 leading-relaxed">
+              Plant maintenance work orders, machine operation schedules, and automated production line telemetry.
+            </p>
+          </div>
+
+          <div className="p-3 rounded-xl border border-emerald-200 bg-emerald-50/60 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+                <FileSpreadsheet className="w-4 h-4 text-emerald-700" />
+                Excel &amp; Audit Logs
+              </span>
+              <span className="text-[9.5px] font-mono font-bold text-emerald-800 bg-emerald-200/80 px-1.5 py-0.5 rounded">
+                CSV / XLSX
+              </span>
+            </div>
+            <p className="text-[11px] text-emerald-900 leading-relaxed">
+              Historical OSHA safety logs, shift attendance sheets, offline safety audit checklists, and training records.
+            </p>
+          </div>
+
+          <div className="p-3 rounded-xl border border-purple-200 bg-purple-50/60 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-purple-950 flex items-center gap-1.5">
+                <Radio className="w-4 h-4 text-purple-700" />
+                APIs &amp; Webhooks
+              </span>
+              <span className="text-[9.5px] font-mono font-bold text-purple-800 bg-purple-200/80 px-1.5 py-0.5 rounded">
+                REST / OData
+              </span>
+            </div>
+            <p className="text-[11px] text-purple-900 leading-relaxed">
+              Live webhooks streaming plant safety alerts, contractor gate passes, and environmental sensor readings.
+            </p>
+          </div>
         </div>
 
-        {/* 3 Source Tables Breakdown (Informational Cards) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {/* 3 Grounded PostgreSQL Tables */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-0.5">
           <div className="p-3 rounded-xl border border-line-subtle bg-canvas-subtle space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-ink-primary flex items-center gap-1.5">
+              <span className="text-xs font-bold text-ink-primary flex items-center gap-1.5 font-mono">
                 <ShieldAlert className="w-4 h-4 text-red-600" />
                 fact_ehs_event
               </span>
@@ -87,13 +127,13 @@ export const PipelineStageDetail: React.FC<PipelineStageDetailProps> = ({
               </span>
             </div>
             <p className="text-[11px] text-ink-muted leading-relaxed">
-              Logs near-misses, injuries, hazard observations, and corrective actions with risk severities and due dates.
+              Safety incidents, hazards, near-misses, first-aid reports, and corrective action workflows.
             </p>
           </div>
 
           <div className="p-3 rounded-xl border border-line-subtle bg-canvas-subtle space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-ink-primary flex items-center gap-1.5">
+              <span className="text-xs font-bold text-ink-primary flex items-center gap-1.5 font-mono">
                 <Database className="w-4 h-4 text-emerald-600" />
                 fact_workforce_attendance
               </span>
@@ -102,13 +142,13 @@ export const PipelineStageDetail: React.FC<PipelineStageDetailProps> = ({
               </span>
             </div>
             <p className="text-[11px] text-ink-muted leading-relaxed">
-              Captures worker shift attendance, overtime hours, and mandatory safety certifications across all plant lines.
+              Shift rosters, worker hours, safety training certifications, and overtime records.
             </p>
           </div>
 
           <div className="p-3 rounded-xl border border-line-subtle bg-canvas-subtle space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-ink-primary flex items-center gap-1.5">
+              <span className="text-xs font-bold text-ink-primary flex items-center gap-1.5 font-mono">
                 <Wrench className="w-4 h-4 text-sky-600" />
                 fact_maintenance_work_order
               </span>
@@ -117,14 +157,14 @@ export const PipelineStageDetail: React.FC<PipelineStageDetailProps> = ({
               </span>
             </div>
             <p className="text-[11px] text-ink-muted leading-relaxed">
-              Tracks machine maintenance work orders, P1 priority repairs, failure modes, and avoided downtime hours.
+              Machine repair orders, P1 urgent jobs, failure modes, equipment tags, and avoided downtime.
             </p>
           </div>
         </div>
 
         <div className="rounded-xl border border-line-subtle bg-canvas-subtle p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
           <span className="text-ink-secondary">
-            Tip: Click any of the 3 table nodes in Card 1 above to inspect its live records, column schema, and data fields.
+            Click any table node in Card 1 above to inspect its live records, column schema, and data fields.
           </span>
           <span className="text-[11px] text-green-600 font-semibold flex items-center gap-1">
             <CheckCircle2 className="w-3.5 h-3.5" /> 100% Grounded in Neon PostgreSQL
@@ -223,14 +263,37 @@ export const PipelineStageDetail: React.FC<PipelineStageDetailProps> = ({
           </span>
         </div>
 
-        {/* Card Purpose & Explanation */}
-        <div className="p-3.5 rounded-xl border border-blue-200 bg-blue-50/50 space-y-2">
-          <h4 className="text-xs font-bold text-blue-950 uppercase tracking-wide">
-            What is the FastAPI Gateway?
-          </h4>
-          <p className="text-xs text-blue-900 leading-relaxed">
-            The FastAPI Gateway acts as the central API router and ingestion orchestrator for the entire application. Powered by Uvicorn and an asynchronous non-blocking event loop, it routes incoming frontend client requests into two specialized pipelines: the Natural Language Text-to-SQL Agent route and the Computer Vision video detection upload route.
-          </p>
+        {/* Route Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="p-3.5 rounded-xl border border-blue-200 bg-blue-50/60 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-blue-950 flex items-center gap-1.5">
+                <Terminal className="w-4 h-4 text-blue-700" />
+                Agent Calling Route
+              </span>
+              <span className="text-[10px] font-mono font-bold text-white bg-blue-600 px-2 py-0.5 rounded">
+                POST /api/v1/ai/query
+              </span>
+            </div>
+            <p className="text-xs text-blue-900 leading-relaxed">
+              Handles natural language queries, validates Pydantic payloads, invokes DomoGPT Text-to-SQL, and executes read-only queries with transaction rollback.
+            </p>
+          </div>
+
+          <div className="p-3.5 rounded-xl border border-indigo-200 bg-indigo-50/60 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
+                <Video className="w-4 h-4 text-indigo-700" />
+                Detection Calling Route
+              </span>
+              <span className="text-[10px] font-mono font-bold text-white bg-indigo-600 px-2 py-0.5 rounded">
+                POST /api/v1/detection/upload
+              </span>
+            </div>
+            <p className="text-xs text-indigo-900 leading-relaxed">
+              Streams video files, invokes selected CV models (falls, fire, exit, forklift, machinery, height), draws bounding boxes, and generates annotated clips.
+            </p>
+          </div>
         </div>
 
         {/* Gateway Architecture Features */}
@@ -254,7 +317,7 @@ export const PipelineStageDetail: React.FC<PipelineStageDetailProps> = ({
         </div>
 
         <div className="rounded-xl border border-line-subtle bg-canvas-subtle p-3 text-xs text-ink-secondary">
-          Tip: Click either the <strong>Agent Calling Route</strong> node or the <strong>Detection Calling Route</strong> node above to inspect its exact API payload, endpoint path, and response schemas.
+          Click either the <strong>Agent Calling Route</strong> node or the <strong>Detection Calling Route</strong> node above to inspect its exact API payload, endpoint path, and response schemas.
         </div>
       </div>
     );
@@ -431,40 +494,83 @@ export const PipelineStageDetail: React.FC<PipelineStageDetailProps> = ({
           </span>
         </div>
 
-        {/* Card Purpose & Explanation */}
-        <div className="p-3.5 rounded-xl border border-purple-200 bg-purple-50/50 space-y-2">
-          <h4 className="text-xs font-bold text-purple-950 uppercase tracking-wide">
-            What are the Core Engines?
-          </h4>
-          <p className="text-xs text-purple-900 leading-relaxed">
-            Card 3 contains the analytical brains of the system. Rather than relying on simple rule thresholds, it pairs an LLM-powered natural language reasoning agent (DomoGPT) with an automated Computer Vision processing cluster. Together, they provide both retroactive business audit capabilities and prospective live hazard intervention.
-          </p>
-        </div>
-
+        {/* Dual Engines Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="p-3 rounded-xl border border-line-subtle bg-canvas-subtle space-y-1.5">
-            <span className="text-xs font-bold text-ink-primary flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-purple-600" />
-              Engine 1: DomoGPT Text-to-SQL Core
-            </span>
-            <p className="text-xs text-ink-muted leading-relaxed">
+          <div className="p-3.5 rounded-xl border border-purple-200 bg-purple-50/60 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-purple-950 flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-purple-600" />
+                Engine 1: DomoGPT Text-to-SQL Core
+              </span>
+              <span className="text-[9.5px] font-mono font-bold text-purple-800 bg-purple-200/80 px-2 py-0.5 rounded">
+                DomoGPT v2.2
+              </span>
+            </div>
+            <p className="text-xs text-purple-900 leading-relaxed">
               Synthesizes ANSI SQL queries from conversational prompts. Grounded with complete schema metadata and AST security parsing to prevent unauthorized data manipulation.
             </p>
+            <div className="flex items-center gap-2 text-[11px] text-purple-950 font-semibold pt-1">
+              <CheckCircle2 className="w-3.5 h-3.5 text-purple-700" />
+              <span>Zero Hallucinations Guarantee</span>
+            </div>
           </div>
 
-          <div className="p-3 rounded-xl border border-line-subtle bg-canvas-subtle space-y-1.5">
-            <span className="text-xs font-bold text-ink-primary flex items-center gap-1.5">
-              <Eye className="w-4 h-4 text-fuchsia-600" />
-              Engine 2: Safety Detection Computer Vision Suite
-            </span>
-            <p className="text-xs text-ink-muted leading-relaxed">
-              Cluster of 6 specialized computer vision models evaluating live CCTV camera frames for falls, smoke/fire, blocked exits, forklift near-misses, and machine danger zones.
+          <div className="p-3.5 rounded-xl border border-fuchsia-200 bg-fuchsia-50/60 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-fuchsia-950 flex items-center gap-1.5">
+                <Eye className="w-4 h-4 text-fuchsia-600" />
+                Engine 2: Computer Vision Suite
+              </span>
+              <span className="text-[9.5px] font-mono font-bold text-fuchsia-800 bg-fuchsia-200/80 px-2 py-0.5 rounded">
+                6 CV Models
+              </span>
+            </div>
+            <p className="text-xs text-fuchsia-900 leading-relaxed">
+              Automated vision processing cluster running OpenFall, YOLOv8 object detection, and OWLv2 zero-shot spatial boundaries across surveillance frames.
             </p>
+            <div className="flex items-center gap-2 text-[11px] text-fuchsia-950 font-semibold pt-1">
+              <CheckCircle2 className="w-3.5 h-3.5 text-fuchsia-700" />
+              <span>Real-Time Edge Inference at 30 FPS</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 6 CV Models Breakdown */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="p-2.5 rounded-xl border border-line-subtle bg-canvas-subtle space-y-1">
+            <span className="block text-xs font-bold text-ink-primary">1. Fall &amp; Posture</span>
+            <span className="block text-[10px] font-mono text-ink-secondary">OpenFall + MediaPipe</span>
+            <span className="block text-[10.5px] text-ink-muted">33 body keypoint tracking</span>
+          </div>
+          <div className="p-2.5 rounded-xl border border-line-subtle bg-canvas-subtle space-y-1">
+            <span className="block text-xs font-bold text-ink-primary">2. Smoke &amp; Fire</span>
+            <span className="block text-[10px] font-mono text-ink-secondary">YOLOv8-Fire + Particles</span>
+            <span className="block text-[10.5px] text-ink-muted">Optical plume warning</span>
+          </div>
+          <div className="p-2.5 rounded-xl border border-line-subtle bg-canvas-subtle space-y-1">
+            <span className="block text-xs font-bold text-ink-primary">3. Exit Obstruction</span>
+            <span className="block text-[10px] font-mono text-ink-secondary">OWLv2 Zero-Shot</span>
+            <span className="block text-[10.5px] text-ink-muted">Corridor stay-clear zone</span>
+          </div>
+          <div className="p-2.5 rounded-xl border border-line-subtle bg-canvas-subtle space-y-1">
+            <span className="block text-xs font-bold text-ink-primary">4. Forklift Near Miss</span>
+            <span className="block text-[10px] font-mono text-ink-secondary">YOLOv8 + ByteTrack</span>
+            <span className="block text-[10.5px] text-ink-muted">&lt;2.5m proximity hulls</span>
+          </div>
+          <div className="p-2.5 rounded-xl border border-line-subtle bg-canvas-subtle space-y-1">
+            <span className="block text-xs font-bold text-ink-primary">5. Machine Proximity</span>
+            <span className="block text-[10px] font-mono text-ink-secondary">Danger Zone Keypoints</span>
+            <span className="block text-[10.5px] text-ink-muted">Pinch-point optical fencing</span>
+          </div>
+          <div className="p-2.5 rounded-xl border border-line-subtle bg-canvas-subtle space-y-1">
+            <span className="block text-xs font-bold text-ink-primary">6. Unsafe Climbing</span>
+            <span className="block text-[10px] font-mono text-ink-secondary">Elevation + Harness</span>
+            <span className="block text-[10.5px] text-ink-muted">Height safety classification</span>
           </div>
         </div>
 
         <div className="rounded-xl border border-line-subtle bg-canvas-subtle p-3 text-xs text-ink-secondary">
-          Tip: Click either the <strong>EHS Agent Node</strong> or the <strong>Detection Node</strong> above to inspect its deep neural architecture and model specifications.
+          Click either the <strong>EHS Agent Node</strong> or the <strong>Detection Node</strong> above to inspect its deep neural architecture and model specifications.
         </div>
       </div>
     );
@@ -631,40 +737,49 @@ export const PipelineStageDetail: React.FC<PipelineStageDetailProps> = ({
           </span>
         </div>
 
-        {/* Card Purpose & Explanation */}
-        <div className="p-3.5 rounded-xl border border-red-200 bg-red-50/50 space-y-2">
-          <h4 className="text-xs font-bold text-red-950 uppercase tracking-wide">
-            What are Closed-Loop Outcomes?
-          </h4>
-          <p className="text-xs text-red-900 leading-relaxed">
-            Closed-loop outcomes represent the tangible business impact of the safety platform. Detections from computer vision models do not end at an alert—they automatically log structured incident tickets in `fact_ehs_event`, trigger plant supervisor dispatch, and update executive KPIs. Concurrently, the EHS agent tracks corrective action closures to prevent recurring hazards.
-          </p>
-        </div>
-
+        {/* 2 Outcomes Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="p-3 rounded-xl border border-line-subtle bg-canvas-subtle space-y-1.5">
-            <span className="text-xs font-bold text-ink-primary flex items-center gap-1.5">
-              <FileText className="w-4 h-4 text-amber-600" />
-              Outcome 1: Agent Audits &amp; Compliance Reporting
-            </span>
-            <p className="text-xs text-ink-muted leading-relaxed">
+          <div className="p-3.5 rounded-xl border border-amber-200 bg-amber-50/60 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-amber-600" />
+                Outcome 1: Agent Audits &amp; Compliance Reporting
+              </span>
+              <span className="text-[9.5px] font-mono font-bold text-amber-800 bg-amber-200/80 px-2 py-0.5 rounded">
+                KPIs &amp; Audits
+              </span>
+            </div>
+            <p className="text-xs text-amber-900 leading-relaxed">
               Automates OSHA TRIR and DART calculation, alerts leaders to overdue corrective actions, and verifies training qualifications against shift rosters.
             </p>
+            <div className="flex items-center gap-2 text-[11px] text-amber-950 font-semibold pt-1">
+              <CheckCircle2 className="w-3.5 h-3.5 text-amber-600" />
+              <span>Grounded in Neon PostgreSQL Star Schema</span>
+            </div>
           </div>
 
-          <div className="p-3 rounded-xl border border-line-subtle bg-canvas-subtle space-y-1.5">
-            <span className="text-xs font-bold text-ink-primary flex items-center gap-1.5">
-              <Zap className="w-4 h-4 text-rose-600" />
-              Outcome 2: Real-Time Detection Evidence &amp; Siren Dispatch
-            </span>
-            <p className="text-xs text-ink-muted leading-relaxed">
+          <div className="p-3.5 rounded-xl border border-rose-200 bg-rose-50/60 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-rose-950 flex items-center gap-1.5">
+                <Zap className="w-4 h-4 text-rose-600" />
+                Outcome 2: Real-Time Detection Evidence &amp; Siren Dispatch
+              </span>
+              <span className="text-[9.5px] font-mono font-bold text-rose-800 bg-rose-200/80 px-2 py-0.5 rounded">
+                Visual Proof
+              </span>
+            </div>
+            <p className="text-xs text-rose-900 leading-relaxed">
               Provides timestamped bounding-box video clips, triggers on-floor audio alarms, and dispatches immediate notification to plant safety marshals.
             </p>
+            <div className="flex items-center gap-2 text-[11px] text-rose-950 font-semibold pt-1">
+              <CheckCircle2 className="w-3.5 h-3.5 text-rose-600" />
+              <span>Auto-Logs Tickets to fact_ehs_event</span>
+            </div>
           </div>
         </div>
 
         <div className="rounded-xl border border-line-subtle bg-canvas-subtle p-3 text-xs text-ink-secondary">
-          Tip: Click either the <strong>Agent Outcomes</strong> node or the <strong>Detection Outcomes</strong> node above to inspect its audit workflows and video playback evidence.
+          Click either the <strong>Agent Outcomes</strong> node or the <strong>Detection Outcomes</strong> node above to inspect its audit workflows and video playback evidence.
         </div>
       </div>
     );
