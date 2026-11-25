@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Database, Eye, FileText, ShieldAlert, Sparkles, Terminal, Video, Wrench, Zap } from 'lucide-react';
+import { ArrowRight, BrainCircuit, Database, Factory, Server, Target, Eye, FileText, ShieldAlert, Sparkles, Terminal, Video, Wrench, Zap } from 'lucide-react';
 
 export type PipelineStageId =
   // Card 1: Source System & Grounded Tables
@@ -29,39 +29,10 @@ interface ArchitecturePipelineProps {
    High-Fidelity Header Icons
    =========================================================================== */
 
-/** Factory / Source Header Icon */
-const FactoryHeaderIcon = () => (
-  <svg className="w-5 h-5 text-white shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M2 20h20M2 20V8l5 4V8l5 4V4h4l4 4v12" />
-    <path d="M18 9h1M18 13h1M6 16h1M10 16h1M14 16h1" />
-  </svg>
-);
-
-/** Server / FastAPI Gateway Header Icon */
-const FastApiHeaderIcon = () => (
-  <svg className="w-5 h-5 text-white shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
-    <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
-    <line x1="6" y1="6" x2="6.01" y2="6" />
-    <line x1="6" y1="18" x2="6.01" y2="18" />
-  </svg>
-);
-
-/** AI & Vision Engine Core Header Icon */
-const EnginesHeaderIcon = () => (
-  <svg className="w-5 h-5 text-white shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 2a4 4 0 0 1 4 4c0 1.95-1.4 3.58-3.25 3.93L13 14h-2l.25-4.07A4.002 4.002 0 0 1 12 2z" />
-    <circle cx="12" cy="18" r="2" />
-    <path d="M6 10l-3 3 3 3" />
-    <path d="M18 10l3 3-3 3" />
-  </svg>
-);
-
-/** Closed-Loop Outcomes Header Icon */
-const OutcomesHeaderIcon = () => (
-  <svg className="w-5 h-5 text-white shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-  </svg>
+const HeaderBadge: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <span className="w-9 h-9 shrink-0 rounded-lg bg-white/20 ring-1 ring-white/30 flex items-center justify-center text-white">
+    {children}
+  </span>
 );
 
 /* ===========================================================================
@@ -112,7 +83,7 @@ export const ArchitecturePipeline: React.FC<ArchitecturePipelineProps> = ({ acti
               onClick={() => onSelectStage('source')}
               className="w-full h-[76px] min-h-[76px] max-h-[76px] bg-gradient-to-r from-[#991b1b] to-[#b91c1c] text-white px-3 flex items-center gap-2.5 text-left focus:outline-none transition-colors hover:brightness-105"
             >
-              <FactoryHeaderIcon />
+              <HeaderBadge><Factory className="w-5 h-5" /></HeaderBadge>
               <div className="min-w-0 flex-1 flex flex-col justify-center">
                 <h3 className="text-xs font-black uppercase tracking-wider text-white leading-tight truncate">
                   1. SOURCE SYSTEM
@@ -219,7 +190,7 @@ export const ArchitecturePipeline: React.FC<ArchitecturePipelineProps> = ({ acti
               onClick={() => onSelectStage('fastapi')}
               className="w-full h-[76px] min-h-[76px] max-h-[76px] bg-gradient-to-r from-[#1d4ed8] to-[#2563eb] text-white px-3 flex items-center gap-2.5 text-left focus:outline-none transition-colors hover:brightness-105"
             >
-              <FastApiHeaderIcon />
+              <HeaderBadge><Server className="w-5 h-5" /></HeaderBadge>
               <div className="min-w-0 flex-1 flex flex-col justify-center">
                 <h3 className="text-xs font-black uppercase tracking-wider text-white leading-tight truncate">
                   2. FASTAPI GATEWAY
@@ -250,13 +221,7 @@ export const ArchitecturePipeline: React.FC<ArchitecturePipelineProps> = ({ acti
                     <span className="block text-xs font-black text-slate-800 leading-snug truncate">
                       Agent Calling Route
                     </span>
-                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-blue-200 text-blue-800 shrink-0">
-                      POST
-                    </span>
                   </div>
-                  <span className="block font-mono text-[10px] text-blue-700 font-semibold truncate mt-0.5">
-                    /api/v1/ai/query
-                  </span>
                   <span className="block text-[9.5px] text-slate-500 truncate">
                     Natural language NLQ ➔ SQL dispatch
                   </span>
@@ -281,13 +246,7 @@ export const ArchitecturePipeline: React.FC<ArchitecturePipelineProps> = ({ acti
                     <span className="block text-xs font-black text-slate-800 leading-snug truncate">
                       Detection Calling Route
                     </span>
-                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-indigo-200 text-indigo-800 shrink-0">
-                      POST
-                    </span>
                   </div>
-                  <span className="block font-mono text-[10px] text-indigo-700 font-semibold truncate mt-0.5">
-                    /api/v1/detection/upload
-                  </span>
                   <span className="block text-[9.5px] text-slate-500 truncate">
                     Video streaming &amp; CV model dispatch
                   </span>
@@ -319,7 +278,7 @@ export const ArchitecturePipeline: React.FC<ArchitecturePipelineProps> = ({ acti
               onClick={() => onSelectStage('engines')}
               className="w-full h-[76px] min-h-[76px] max-h-[76px] bg-gradient-to-r from-[#581c87] to-[#7e22ce] text-white px-3 flex items-center gap-2.5 text-left focus:outline-none transition-colors hover:brightness-105"
             >
-              <EnginesHeaderIcon />
+              <HeaderBadge><BrainCircuit className="w-5 h-5" /></HeaderBadge>
               <div className="min-w-0 flex-1 flex flex-col justify-center">
                 <h3 className="text-xs font-black uppercase tracking-wider text-white leading-tight truncate">
                   3. AI &amp; DETECTION ENGINES
@@ -419,7 +378,7 @@ export const ArchitecturePipeline: React.FC<ArchitecturePipelineProps> = ({ acti
               onClick={() => onSelectStage('outcomes')}
               className="w-full h-[76px] min-h-[76px] max-h-[76px] bg-gradient-to-r from-[#991b1b] to-[#b91c1c] text-white px-3 flex items-center gap-2.5 text-left focus:outline-none transition-colors hover:brightness-105"
             >
-              <OutcomesHeaderIcon />
+              <HeaderBadge><Target className="w-5 h-5" /></HeaderBadge>
               <div className="min-w-0 flex-1 flex flex-col justify-center">
                 <h3 className="text-xs font-black uppercase tracking-wider text-white leading-tight truncate">
                   4. CLOSED-LOOP OUTCOMES

@@ -317,7 +317,7 @@ export const PipelineStageDetail: React.FC<PipelineStageDetailProps> = ({
         </div>
 
         <div className="rounded-xl border border-line-subtle bg-canvas-subtle p-3 text-xs text-ink-secondary">
-          Click either the <strong>Agent Calling Route</strong> node or the <strong>Detection Calling Route</strong> node above to inspect its exact API payload, endpoint path, and response schemas.
+          Click either the <strong>Agent Calling Route</strong> node or the <strong>Detection Calling Route</strong> node above to inspect how it processes requests.
         </div>
       </div>
     );
@@ -337,9 +337,6 @@ export const PipelineStageDetail: React.FC<PipelineStageDetailProps> = ({
                 <h3 className="text-base font-extrabold text-ink-primary leading-tight">
                   Agent Calling Route
                 </h3>
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-blue-600 text-white">
-                  POST /api/v1/ai/query
-                </span>
               </div>
               <p className="text-xs text-ink-muted">
                 Accepts user questions in plain text, validates intent, and dispatches to DomoGPT Agent.
@@ -362,24 +359,8 @@ export const PipelineStageDetail: React.FC<PipelineStageDetailProps> = ({
               <li>Returns natural language answer with record citations.</li>
             </ol>
           </div>
-
-          <div className="rounded-xl bg-slate-900 p-3 font-mono text-[11px] text-slate-200 space-y-1.5">
-            <div className="text-slate-400 text-[10px] uppercase font-bold">// Sample Request Payload</div>
-            <div className="text-emerald-400">POST /api/v1/ai/query</div>
-            <pre className="text-slate-300 whitespace-pre-wrap">
-{`{
-  "question": "Which actions are overdue?",
-  "context": { "plant_id": "P01" }
-}`}
-            </pre>
-            <div className="text-slate-400 text-[10px] uppercase font-bold pt-1">// Response Contract</div>
-            <pre className="text-sky-300 whitespace-pre-wrap">
-{`{
-  "answer": "There are 257 overdue actions...",
-  "sql_query": "SELECT * FROM fact_ehs_event...",
-  "citations": ["fact_ehs_event"]
-}`}
-            </pre>
+          <div className="hidden md:flex items-center justify-center">
+            <img src="/illustrations/agent-robot.png" alt="Friendly AI agent robot" className="max-h-44 w-auto object-contain drop-shadow-md" />
           </div>
         </div>
 
@@ -409,9 +390,6 @@ export const PipelineStageDetail: React.FC<PipelineStageDetailProps> = ({
                 <h3 className="text-base font-extrabold text-ink-primary leading-tight">
                   Detection Calling Route
                 </h3>
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-indigo-600 text-white">
-                  POST /api/v1/detection/upload
-                </span>
               </div>
               <p className="text-xs text-ink-muted">
                 Streams video files, invokes computer vision models, and outputs annotated bounding-box footage.
@@ -434,24 +412,8 @@ export const PipelineStageDetail: React.FC<PipelineStageDetailProps> = ({
               <li>Broadcasts real-time safety alert to supervisor terminals.</li>
             </ol>
           </div>
-
-          <div className="rounded-xl bg-slate-900 p-3 font-mono text-[11px] text-slate-200 space-y-1.5">
-            <div className="text-slate-400 text-[10px] uppercase font-bold">// Multipart Upload Format</div>
-            <div className="text-indigo-400">POST /api/v1/detection/upload</div>
-            <pre className="text-slate-300 whitespace-pre-wrap">
-{`Content-Type: multipart/form-data
-  file: cam04_loading_bay.mp4
-  scenario: "fall_detection"`}
-            </pre>
-            <div className="text-slate-400 text-[10px] uppercase font-bold pt-1">// Output Payload</div>
-            <pre className="text-indigo-300 whitespace-pre-wrap">
-{`{
-  "job_id": "job_01h8q...",
-  "annotated_video_url": "/api/v1/detection/video/...",
-  "detections_count": 3,
-  "incident_created": true
-}`}
-            </pre>
+          <div className="hidden md:flex items-center justify-center">
+            <img src="/illustrations/detection-face.png" alt="Face detection illustration" className="max-h-44 w-auto object-contain drop-shadow-md" />
           </div>
         </div>
 
